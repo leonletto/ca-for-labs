@@ -33,6 +33,7 @@ password=password
 
 mkdir ./cacerts
 mkdir ./certs
+mkdir ./usercerts
 mkdir ./crl
 mkdir ./newcerts
 mkdir ./pfxfiles

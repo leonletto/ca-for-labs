@@ -5,6 +5,7 @@ rm -rf newcerts
 rm -rf pfxfiles
 rm -rf privatekeys
 rm -rf requests
+rm -rf usercerts
 rm -f index.txt
 rm -f index.txt.*
 rm -f openssl.cnf
