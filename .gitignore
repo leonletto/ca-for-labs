@@ -2,3 +2,25 @@
 .idea
 
 secrets
+
+#test script
+test.sh
+#Folders created by the createCa.sh script
+cacerts
+certs
+usercerts
+crl
+newcerts
+pfxfiles
+privatekeys
+requests
+
+#Files created by the createCa.sh script
+index.*
+serial*
+crlnumber*
+openssl.cnf
+openssl.cnf.bak
+options.cnf
+options.cnf.bak
+
