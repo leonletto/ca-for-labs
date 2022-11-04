@@ -122,7 +122,12 @@ touch index.txt
 echo "unique_subject = yes" > index.txt.attr
 openssl ca -config openssl.cnf -passin pass:"$password" -gencrl -out crl/"$caname".crl.pem
 
-./newCert.sh localhost
+echo "CA Certificate Created and you are ready to issue Certificates"
+echo "Please copy the following files to Anywhere that needs to trust certificates from this CA"
+echo "cacerts/$caname.crt"
+
+# Create a new Certificate
+#./newCert.sh localhost
 
 #To Revoke a certificate, type the following ( for the localhost certificate generated above )
 #openssl ca -config openssl.cnf -revoke certs/localhost.crt
