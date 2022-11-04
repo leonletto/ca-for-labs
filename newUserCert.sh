@@ -1,10 +1,8 @@
 #!/bin/bash
-
-#if [[ `id -u` != 0 ]]; then
-#    #https://unix.stackexchange.com/a/23962
-#    echo "Must be root to run script"
-#    exit
-#fi
+set -o errexit
+set -o nounset
+set -o pipefail
+if [[ "${TRACE-0}" == "1" ]]; then set -o xtrace; fi
 
 echo 'Please enter the Certificate Name for the Certificateyou are creating.\n'
 echo 'This will become the filename of your certificates'

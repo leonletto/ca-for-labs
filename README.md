@@ -22,7 +22,7 @@ chmod +x createCa.sh
 ./createCa.sh
 ```
 
-* Issue certificates for your environment
+* Issue server certificates for your environment
 ```shell
 chmod +x newCert.sh
 ./newCert.sh myhost.mydomain.com

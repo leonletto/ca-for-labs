@@ -5,7 +5,7 @@ set -o pipefail
 if [[ "${TRACE-0}" == "1" ]]; then set -o xtrace; fi
 
 echo 'Please enter the Certificate Authority Name for the CA you are creating.'
-echo 'This will become the filename of your CA certificates'
+echo 'This will also become the filename of your CA certificates'
 read -r caname
 #caname=myca3
 echo 'Please Answer All of the questions in as much detail as you like.'
