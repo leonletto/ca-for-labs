@@ -32,7 +32,7 @@ chmod +x newCert.sh
 ```
 
 
-### Issue user certificates for your environment
+### Issue user certificates for your environment (working on it...)
 ```shell
 chmod +x newUserCert.sh
 ./newUserCert.sh joe
