@@ -2,7 +2,8 @@
 
 ## Features:
 * Create your own CA for your environment
-* Issue certificates for your environment
+* Issue server certificates for your environment
+  * Creates PEM and PFX certificates
 * Revoke certificates for your environment
 * Create a certificate revocation list (CRL) for your environment
 
@@ -36,3 +37,4 @@ chmod +x newCert.sh
 ```shell
 chmod +x newUserCert.sh
 ./newUserCert.sh joe
+```
