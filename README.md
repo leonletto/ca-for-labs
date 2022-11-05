@@ -7,13 +7,8 @@
 * Create a certificate revocation list (CRL) for your environment
 
 ## Requirements:
+* Linux or MacOS
 * openssl
-* bash
-* sed
-* grep
-* awk
-* openssl.cnf
-* options.cnf
 
 ## Usage:
 * Create your own CA for your environment
@@ -26,4 +21,11 @@ chmod +x createCa.sh
 ```shell
 chmod +x newCert.sh
 ./newCert.sh myhost.mydomain.com
+```
+
+
+* Issue user certificates for your environment
+```shell
+chmod +x newUserCert.sh
+./newUserCert.sh joe
 ```
