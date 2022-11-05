@@ -17,10 +17,20 @@ chmod +x createCa.sh
 ./createCa.sh
 ```
 
-* Issue server certificates for your environment
+* Issue server certificates for your environment manually
+### 
 ```shell
 chmod +x newCert.sh
 ./newCert.sh myhost.mydomain.com
+```
+
+* Issue server certificates for your environment automatically
+
+*Note: all passwords must have single quotes around them to prevent special characters from being interpreted by the shell*
+```shell
+chmod +x newCert.sh
+./newCert.sh myhost.mydomain.com 'myCAPassword' 'myPFXPassword' 'myPrivateKeyPassword'
+```
 ```
 
 

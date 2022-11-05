@@ -35,14 +35,34 @@ echo 'Email Address :'; read -r emailAddress
 
 declare password
 VALID=true
-validCharacters='[\~\!\@\#\$\%\^\&\*\(\)\_\+]'
+validCharacters='[\~\!\@\#\$\%\^\*\_\+\-\=\{\}\[\]\:\,\.\/]'
+#~	Tilde
+#!	Exclamation
+#@	At sign
+#$  Dollar sign
+##	hash
+#%	Percent
+#^	Caret
+#*	Asterisk
+#_	Underscore
+#+	Plus
+#-	Hyphen
+#=	Equal sign
+#{	Left brace
+#}	Right brace
+#[	Left bracket
+#]	Right bracket
+#:	Colon
+#,	Comma
+#.	Full stop
+#/    Forward slash
 echo "A password is required to protect your CA Private Key."
 echo "A valid password must:"
 echo "Have a minimum of 10 characters and a maximum of 25."
 echo "Contain at least one digits."
 echo "Contain at least one uppercase letters."
 echo "Contain at least one lowercase letters."
-echo "Contain at least one top-row character"
+echo "Contain at least one special character"
 echo "eg. one of: ${validCharacters//\\/}"
 echo "Not contain spaces."
 
@@ -78,7 +98,7 @@ for (( ;; )); do
     fi
 #	elif [[ $PASS1 != *[[:punct:]]*[[:punct:]]* ]]; then
 	if ! grep -q -e "$validCharacters" <<< "$PASS1"; then
-		echo "Password should contain at least one top-row special character."
+		echo "Password should contain at least one special character."
 		echo "eg. one of: ${validCharacters//\\/}"
 		VALID=false
     fi
