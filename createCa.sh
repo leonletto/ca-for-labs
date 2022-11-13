@@ -35,7 +35,7 @@ echo 'Email Address :'; read -r emailAddress
 
 declare password
 VALID=true
-validCharacters='[\~\!\@\#\$\%\^\*\_\+\-\=\{\}\[\]\:\,\.\/]'
+validCharacters='[\~\!\@\#\$\%\^\&\*\(\)\_\+]'
 #~	Tilde
 #!	Exclamation
 #@	At sign
@@ -111,6 +111,9 @@ for (( ;; )); do
 		echo "Password accepted."
 		password=$PASS1
 		break
+    else
+        # invalid password; reset VALID and try again
+        VALID=true
 	fi
 	echo
 done
