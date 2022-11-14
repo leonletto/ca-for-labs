@@ -52,31 +52,4 @@ openssl pkcs12 -export -clcerts -in usercerts/$certname.crt -inkey usercerts/$ce
 security import usercerts/$certname.p12 -k ~/Library/Keychains/login.keychain
 
 
-#bash-3.2$ openssl req -new -config openssl.cnf -key usercerts/$certname.key -sha256 -out usercerts/$certname.csr
-#You are about to be asked to enter information that will be incorporated
-#into your certificate request.
-#What you are about to enter is what is called a Distinguished Name or a DN.
-#There are quite a few fields but you can leave some blank
-#For some fields there will be a default value,
-#If you enter '.', the field will be left blank.
-#-----
-#ca [US]:^C
-#bash-3.2$ openssl req -new -key usercerts/$certname.key -sha256 -out usercerts/$certname.csr
-#You are about to be asked to enter information that will be incorporated
-#into your certificate request.
-#What you are about to enter is what is called a Distinguished Name or a DN.
-#There are quite a few fields but you can leave some blank
-#For some fields there will be a default value,
-#If you enter '.', the field will be left blank.
-#-----
-#Country Name (2 letter code) []:US
-#State or Province Name (full name) []:CA
-#Locality Name (eg, city) []:San
-#Organization Name (eg, company) []:IT
-#Organizational Unit Name (eg, section) []:IT
-#Common Name (eg, fully qualified host name) []:leon
-#Email Address []:leon@leon.com
-#
-#Please enter the following 'extra' attributes
-#to be sent with your certificate request
-#A challenge password []:
+

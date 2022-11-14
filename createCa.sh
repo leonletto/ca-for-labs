@@ -126,6 +126,8 @@ mkdir ./newcerts
 mkdir ./pfxfiles
 mkdir ./privatekeys
 mkdir ./requests
+mkdir ./revoked
+
 
 cp -f ./opensslSample.cnf ./openssl.cnf
 sed -i .bak "s/yourcaname/$caname/g" openssl.cnf

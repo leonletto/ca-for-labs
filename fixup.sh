@@ -1,3 +1,9 @@
+#!/usr/bin/env bash
+set -o errexit
+set -o nounset
+set -o pipefail
+if [[ "${TRACE-0}" == "1" ]]; then set -o xtrace; fi
+
 rm -rf cacerts
 rm -rf certs
 rm -rf crl
@@ -6,6 +12,7 @@ rm -rf pfxfiles
 rm -rf privatekeys
 rm -rf requests
 rm -rf usercerts
+rm -rf revoked
 rm -f index.txt
 rm -f index.txt.*
 rm -f openssl.cnf
@@ -14,6 +21,10 @@ rm -f options.cnf
 rm -f options.cnf.*
 rm -f serial
 rm -f serial.old
+rm -f littleCAnginx.conf
+rm -f .env
+
+
 
 
 

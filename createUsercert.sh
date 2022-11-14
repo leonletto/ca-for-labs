@@ -1,4 +1,8 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -o errexit
+set -o nounset
+set -o pipefail
+if [[ "${TRACE-0}" == "1" ]]; then set -o xtrace; fi
 
 #if [[ `id -u` != 0 ]]; then
 #    #https://unix.stackexchange.com/a/23962

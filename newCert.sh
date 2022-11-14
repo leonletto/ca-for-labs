@@ -150,6 +150,8 @@ then
             privateKeyPassword="$(echo "${privateKeyPassword}" | sed -e 's/[]\/$*.^|[]/\\&/g')"
             echo
         fi
+    else
+        privateKeyPassword=""
     fi
 else
     privateKeyPassword="$(echo "${4}" | sed -e 's/[]\/$*.^|[]/\\&/g')"
