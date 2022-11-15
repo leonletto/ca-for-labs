@@ -1,5 +1,0 @@
-
-[SAN]
-basicConstraints=CA:FALSE
-extendedKeyUsage=serverAuth
-subjectAltName=DNS:localhost,DNS:127.0.0.1,DNS:yourdomainname,DNS:www.yourdomainname
