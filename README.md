@@ -1,8 +1,8 @@
-# createCa - Create your own CA for your environment and issue and revoke certificates as needed.
+# littleCa - Create your own CA for your environment and issue and revoke certificates as needed.
 
 ## Features:
 
-* Create your own CA for your environment
+* Create your own CA for your lab, home network or demo environment
 * Issue server certificates for your environment
     * Creates PEM and PFX certificates
 * Revoke certificates for your environment
@@ -24,7 +24,7 @@ chmod +x createCa.sh
 
 ### Issue server certificates for your environment manually
 
-###  
+###   
 
 ```shell
 chmod +x newCert.sh
