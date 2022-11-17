@@ -1,5 +1,33 @@
 #!/bin/bash
 # Some functions I am using in my scripts
+
+sedCmd() {
+    local script="$1"
+    local file="$2"
+    case "$(uname -sr)" in
+       Darwin*)
+         sed -i .bak "$script" "$file"
+         ;;
+       Linux*)
+         sed -i.bak -e "$script" "$file"
+         ;;
+    esac
+}
+
+validCharacters='[\~\!\@\#\$\%\^\*\_\+\-\=\{\}\[\]\:\,\.\/]'
+invalidCharacters='[\`\&\(\)\|\\\"\;\<\>\?]'
+
+checkPassword(){
+    if [[ -z "${1}" ]]; then
+        echo "Password is empty."
+        exit 1
+    fi
+    if [[ "${1}" =~ ${invalidCharacters} ]]; then
+        echo "Password contains invalid characters."
+        exit 1
+    fi
+}
+
 fileDate() {
     stat "$@" | awk '{print $10}'
 }
