@@ -1,0 +1,22 @@
+#!/usr/bin/expect -f
+
+set force_conservative 0  ;# set to 1 to force conservative mode even if
+			  ;# script wasn't run conservatively originally
+if {$force_conservative} {
+	set send_slow {1 .1}
+	proc send {ignore arg} {
+		sleep .1
+		exp_send -s -- $arg
+	}
+}
+
+
+set timeout -1
+set var1 {$Test458367}
+set var2 {$Test458367}
+spawn ./newCert.sh testserver.com $var1 $var2
+expect -exact "CA Password accepted.\r
+Password accepted.\r
+Do you want a password on your PEM private key? y/n: "
+send -- "n\r"
+expect eof

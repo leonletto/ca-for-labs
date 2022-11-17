@@ -24,7 +24,7 @@ chmod +x createCa.sh
 
 ### Issue server certificates for your environment manually
 
-###   
+###     
 
 ```shell
 chmod +x newCert.sh
@@ -68,4 +68,18 @@ chmod +x revokeCert.sh
 ./startNginx.sh mylittleca.mydomain.com
 ```
 
-#### Please excuse my repeated code in a few places. Bash functions are still confusing to me when passing complicated variables. I'm open to suggestions for moving some password checking into functions..
+# Testing
+
+### I am using the BATS framework to test the scripts. You can find more information about BATS here:
+
+[Bats-Core](https://github.com/bats-core/bats-core)
+
+### To run the test suite for this project, run the following commands to install the testing framework and run the sample tests:
+
+```shell
+git submodule add https://github.com/bats-core/bats-core.git test/bats
+git submodule add https://github.com/bats-core/bats-support.git test/test_helper/bats-support
+git submodule add https://github.com/bats-core/bats-assert.git test/test_helper/bats-assert
+git submodule add https://github.com/bats-core/bats-file.git test/test_helper/bats-file
+./test/bats/bin/bats test/testLittleCa.bats
+```

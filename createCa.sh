@@ -4,10 +4,9 @@ set -o nounset
 set -o pipefail
 if [[ "${TRACE-0}" == "1" ]]; then set -o xtrace; fi
 
-echo 'Please enter the Certificate Authority Name for the CA you are creating.'
-echo 'This will also become the filename of your CA certificates'
-read -r caname
-#caname=myca3
+. ./bashLibrary.sh
+
+
 echo 'Please Answer All of the questions in as much detail as you like.'
 echo 'The Answers will be shown in the certs you create.'
 
@@ -18,13 +17,76 @@ echo 'There are quite a few fields but you can leave some blank'
 echo 'For some fields there will be a default value,'
 echo 'If you enter '.', the field will be left blank.'
 echo '-----'
-echo 'Country Name (2 letter code):'; read -r C
-echo 'State or Province Name (full name):';read -r ST
-echo 'Locality Name (eg, city) :';read -r L
-echo 'Organization Name (eg, company) :'; read -r O
-echo 'Organizational Unit Name (eg, section) :'; read -r OU
-echo 'Common Name (eg, fully qualified host name) :'; read -r CN
-echo 'Email Address :'; read -r emailAddress
+
+
+if ! [[ "${1:-}" ]]
+then
+    echo
+    echo 'Please enter the Certificate Authority Name for the CA you are creating.'
+    echo 'This will also become the filename of your CA certificates'
+    read -r caname
+    echo
+else
+    caname=$1
+fi
+if ! [[ "${2:-}" ]]
+then
+    echo
+    echo 'Country Name (2 letter code):'; read -r C
+    echo
+else
+    C=$2
+fi
+if ! [[ "${3:-}" ]]
+then
+    echo
+    echo 'State or Province Name (full name):';read -r ST
+    echo
+else
+    ST=$3
+fi
+if ! [[ "${4:-}" ]]
+then
+    echo
+    echo 'Locality Name (eg, city) :';read -r L
+    echo
+else
+    L=$4
+fi
+if ! [[ "${5:-}" ]]
+then
+    echo
+    echo 'Organization Name (eg, company) :'; read -r O
+    echo
+else
+    O=$5
+fi
+if ! [[ "${6:-}" ]]
+then
+    echo
+    echo 'Organizational Unit Name (eg, section) :'; read -r OU
+    echo
+else
+    OU=$6
+fi
+if ! [[ "${6:-}" ]]
+then
+    echo
+    echo 'Common Name (eg, fully qualified host name) :'; read -r CN
+    echo
+else
+    CN=$6
+fi
+if ! [[ "${6:-}" ]]
+then
+    echo
+    echo 'Email Address :'; read -r emailAddress
+    echo
+else
+    emailAddress=$6
+fi
+
+# eg ./createCA.sh ubuntutest US CA Concord Me IT ubuntutest leon@ubuntutest.com
 #C=US
 #ST=CA
 #L=San
@@ -130,14 +192,14 @@ mkdir ./revoked
 
 
 cp -f ./opensslSample.cnf ./openssl.cnf
-sed -i .bak "s/yourcaname/$caname/g" openssl.cnf
-sed -i .bak "s/yourcountryname/$C/g" openssl.cnf
-sed -i .bak "s/yourstatename/$ST/g" openssl.cnf
-sed -i .bak "s/yourlocalityname/$L/g" openssl.cnf
-sed -i .bak "s/yourorgname/$O/g" openssl.cnf
-sed -i .bak "s/yourorgunitname/$OU/g" openssl.cnf
-sed -i .bak "s/yourcommonname/$CN/g" openssl.cnf
-sed -i .bak "s/youremailaddress/$emailAddress/g" openssl.cnf
+sedCmd "s/yourcaname/$caname/g" openssl.cnf
+sedCmd "s/yourcountryname/$C/g" openssl.cnf
+sedCmd "s/yourstatename/$ST/g" openssl.cnf
+sedCmd "s/yourlocalityname/$L/g" openssl.cnf
+sedCmd "s/yourorgname/$O/g" openssl.cnf
+sedCmd "s/yourorgunitname/$OU/g" openssl.cnf
+sedCmd "s/yourcommonname/$CN/g" openssl.cnf
+sedCmd "s/youremailaddress/$emailAddress/g" openssl.cnf
 
 openssl genrsa -aes256 -passout pass:"$password" -out  cacerts/"$caname".key 4096
 openssl req -newkey rsa:2048 -sha256 -x509 -days 1826 -key cacerts/"$caname."key -out cacerts/"$caname".crt -passin pass:"$password"  -subj "/C=$C/ST=$ST/L=$L/O=$O/OU=$OU/CN=$CN/emailAddress=$emailAddress" -config openssl.cnf -extensions v3_ca

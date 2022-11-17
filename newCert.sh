@@ -4,6 +4,8 @@ set -o nounset
 set -o pipefail
 if [[ "${TRACE-0}" == "1" ]]; then set -o xtrace; fi
 
+. ./bashLibrary.sh
+
 if [ -f .env ]; then
     source .env
 
@@ -23,19 +25,7 @@ caCertPath=cacerts
 #certs=certs
 #crl=crl
 pfxFiles=pfxfiles
-validCharacters='[\~\!\@\#\$\%\^\*\_\+\-\=\{\}\[\]\:\,\.\/]'
-invalidCharacters='[\`\&\(\)\|\\\"\;\<\>\?]'
 
-checkPassword(){
-    if [[ -z "${1}" ]]; then
-        echo "Password is empty."
-        exit 1
-    fi
-    if [[ "${1}" =~ ${invalidCharacters} ]]; then
-        echo "Password contains invalid characters."
-        exit 1
-    fi
-}
 
 
 
@@ -56,41 +46,12 @@ then
 else
     caPassword="$(echo "${2}" | sed -e 's/[]\/$*.^|[]/\\&/g')"
 fi
-VALID=true
-myCAPrivateKey=( "$caCertPath"/*.key )
-command="openssl rsa -check -in ${myCAPrivateKey[0]} -passin pass:${caPassword} &> /dev/null"
-secondTry=false
-for (( ;; )); do
-    if ! eval "$command" || false
-    then
-		VALID=false
-	else
-	    VALID=true
-    fi
-	if [[ "$VALID" == "true" ]]; then
-		# valid password; break out of the loop
-		echo "CA Password accepted."
-		caPassword=$(echo "${caPassword}" | sed -e 's/\\//g')
-		if [[ "$secondTry" == "true" ]]; then
-            caPassword=$(echo "${checkCAPassword}" | sed -e 's/\\//g')
-        fi
-		break
-	else
-	    echo "Invalid password for CA private key."
-		echo "Please try again."
-		echo
-	    read -r -s -p "Please enter the password for your CA to issue certificates: " checkCAPassword
-	    checkCAPassword="$(echo "${checkCAPassword}" | sed -e 's/[]\/$*.^|[]/\\&/g')"
-	    command="openssl rsa -check -in ${myCAPrivateKey[0]} -passin pass:${checkCAPassword} &> /dev/null"
-	    echo
-	    secondTry=true
-    echo
-	fi
-	echo
-done
 
-
-
+if checkCAPassword "$caPassword"; then
+    caPassword=$(echo "${caPassword}" | sed -e 's/\\//g')
+else
+    exit 1
+fi
 
 
 if ! [[ "${3:-}" ]]
@@ -101,38 +62,12 @@ then
 else
     pfxPassword="$(echo "${3}" | sed -e 's/[]\/$*.^|[]/\\&/g')"
 fi
-VALID=true
-secondTry=false
-for (( ;; )); do
-    if [[ "$secondTry" == false ]]; then
-            checkPFXPassword=$pfxPassword
-        fi
-	if grep -q -e "$invalidCharacters" <<< "$(echo "${checkPFXPassword}" | sed -e 's/\\//g')"; then
-		VALID=false
-    else
-        VALID=true
-    fi
-	if [[ "$VALID" == "true" ]]; then
-		# valid password; break out of the loop
-		echo "Password accepted."
-		pfxPassword=$(echo "${pfxPassword}" | sed -e 's/\\//g')
-		if [[ "$secondTry" == "true" ]]; then
-            pfxPassword=$(echo "${checkPFXPassword}" | sed -e 's/\\//g')
-        fi
-		break
-	else
-	    echo "Invalid password: $checkPFXPassword"
-        echo "Your Password contains invalid special characters eg: ${invalidCharacters//\\/}."
-		echo "Valid special characters are ${validCharacters//\\/}"
-	    read -r -s -p "Please enter the password to use for your pfx file: " checkPFXPassword
-	    checkPFXPassword="$(echo "${checkPFXPassword}" | sed -e 's/[]\/$*.^|[]/\\&/g')"
-	    secondTry=true
-	fi
-	echo
-done
 
-
-
+if validPassword "$pfxPassword"; then
+    pfxPassword=$(echo "${pfxPassword}" | sed -e 's/\\//g')
+else
+    exit 1
+fi
 
 
 if ! [[ "${4:-}" ]]
@@ -157,37 +92,12 @@ else
     privateKeyPassword="$(echo "${4}" | sed -e 's/[]\/$*.^|[]/\\&/g')"
     passOnPrivateKey="y"
 fi
-VALID=true
-secondTry=false
-for (( ;; )); do
-    if [[ "$secondTry" == false ]]; then
-            checkPrivateKeyPassword=$privateKeyPassword
-        fi
-	if grep -q -e "$invalidCharacters" <<< "$(echo "${checkPrivateKeyPassword}" | sed -e 's/\\//g')"; then
-		VALID=false
-    else
-        VALID=true
-    fi
-	if [[ "$VALID" == "true" ]]; then
-		# valid password; break out of the loop
-		echo "Password accepted."
-		privateKeyPassword=$(echo "${privateKeyPassword}" | sed -e 's/\\//g')
-		if [[ "$secondTry" == "true" ]]; then
-            privateKeyPassword="$(echo "${checkPrivateKeyPassword}" | sed -e 's/\\//g')"
-        fi
-		break
-	else
-	    echo "Invalid password: $checkPrivateKeyPassword"
-        echo "Your Password contains invalid special characters eg: ${invalidCharacters//\\/}."
-		echo "Valid special characters are ${validCharacters//\\/}"
-	    read -r -s -p "Please enter the password to use for your pfx file: " checkPrivateKeyPassword
-	    checkPrivateKeyPassword="$(echo "${checkPrivateKeyPassword}" | sed -e 's/[]\/$*.^|[]/\\&/g')"
-	    secondTry=true
-	fi
-	echo
-done
 
-
+if validPassword "$privateKeyPassword"; then
+    privateKeyPassword=$(echo "${privateKeyPassword}" | sed -e 's/\\//g')
+else
+    exit 1
+fi
 
 echo "Generating key request for $domain"
 
@@ -206,7 +116,7 @@ fi
 
 # Configure the SANs for the certificate
 cp -f ./optionsSample.cnf ./options.cnf
-sed -i .bak "s/yourdomainname/$domain/g" options.cnf
+sedCmd "s/yourdomainname/$domain/g" options.cnf
 #((printf "\n[SAN]\nbasicConstraints=CA:FALSE\nextendedKeyUsage=serverAuth\nsubjectAltName=DNS:%s,DNS:www.%s" "$domain" "$domain")>options.cnf)
 
 #Create the request

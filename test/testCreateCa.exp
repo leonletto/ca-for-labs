@@ -1,0 +1,19 @@
+#!/usr/bin/expect -f
+
+set force_conservative 0  ;# set to 1 to force conservative mode even if
+			  ;# script wasn't run conservatively originally
+if {$force_conservative} {
+	set send_slow {1 .1}
+	proc send {ignore arg} {
+		sleep .1
+		exp_send -s -- $arg
+	}
+}
+
+set timeout -1
+spawn ./createCa.sh testca US CA Concord Me IT testsca leon@testca.com
+expect -re "Please enter the password for your CA private key: $"
+send -- "\$Test458367\r"
+expect -re "Please re-enter the password for your CA private key: $"
+send -- "\$Test458367\r"
+expect eof
