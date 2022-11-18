@@ -24,7 +24,7 @@ chmod +x createCa.sh
 
 ### Issue server certificates for your environment manually
 
-###      
+###       
 
 ```shell
 chmod +x newCert.sh
@@ -56,6 +56,16 @@ chmod +x revokeCert.sh
 
 # or
 ./revokeCert.sh myhost.mydomain.com 'myCAPassword'
+```
+
+### Revoke User certificates for your environment
+
+```shell
+chmod +x revokeCert.sh
+./revokeUserCert.sh joe
+
+# or
+./revokeCert.sh joe 'myCAPassword'
 ```
 
 ### configure nginx server to use your own CA
