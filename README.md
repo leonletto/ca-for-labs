@@ -24,7 +24,7 @@ chmod +x createCa.sh
 
 ### Issue server certificates for your environment manually
 
-###     
+###      
 
 ```shell
 chmod +x newCert.sh
@@ -81,5 +81,6 @@ git submodule add https://github.com/bats-core/bats-core.git test/bats
 git submodule add https://github.com/bats-core/bats-support.git test/test_helper/bats-support
 git submodule add https://github.com/bats-core/bats-assert.git test/test_helper/bats-assert
 git submodule add https://github.com/bats-core/bats-file.git test/test_helper/bats-file
+chmod +x ./createCa.sh ./fixup.sh ./newCert.sh ./newUserCert.sh ./revokeCert.sh ./revokeUserCert.sh
 ./test/bats/bin/bats test/testLittleCa.bats
 ```
