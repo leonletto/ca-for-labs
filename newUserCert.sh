@@ -1,55 +1,187 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -o errexit
 set -o nounset
 set -o pipefail
 if [[ "${TRACE-0}" == "1" ]]; then set -o xtrace; fi
 
-echo 'Please enter the Certificate Name for the Certificateyou are creating.\n'
-echo 'This will become the filename of your certificates'
-read certname
+. ./bashLibrary.sh
 
-echo 'Please Answer All of the questions in as much detail as you like.\n'
-echo 'The Answers will be shown in the certs you create.\n'
+if [ -f .env ]; then
+    source .env
 
-echo 'You are about to be asked to enter information that will be incorporated'
-echo 'into your certificate request.'
-echo 'What you are about to enter is what is called a Distinguished Name or a DN.'
-echo 'There are quite a few fields but you can leave some blank'
-echo 'For some fields there will be a default value,'
-echo 'If you enter '.', the field will be left blank.'
-echo '-----'
-echo 'Country Name (2 letter code):'; read C
-echo 'State or Province Name (full name):';read ST
-echo 'Locality Name (eg, city) :';read L
-echo 'Organization Name (eg, company) :'; read O
-echo 'Organizational Unit Name (eg, section) :'; read OU
-echo 'Common Name (eg, username:serialnumber:whateverelseyoulike) :'; read CN
-echo 'Email Address :'; read emailAddress
+fi
+
+# Example Usage: ./newUserCert.sh "user1" '$Test458367' "password"
+
+caCertPath=cacerts
 
 
-certpath=cacerts
-mycert=( "$certpath"/*.crt )
-mykey=( "$certpath"/*.key )
-password=password
+if ! [[ "${1:-}" ]]
+then
+    echo
+    read -r -p "Please enter the Subject name (eg. username or email or SID ) for your certificate " certName
+    echo
+else
+    certName=$1
+fi
 
-#certname=$1
-#CERT_DUR=365 #1 year
-KEY_LEN=2048
 
-openssl genrsa -aes256 -passout pass:$password -out usercerts/$certname.key $KEY_LEN
+if ! [[ "${2:-}" ]]
+then
+    echo
+    read -r -s -p "Please enter the password for your CA to issue certificates: " caPassword
+    caPassword="$(echo "${caPassword}" | sed -e 's/[]\/$*.^|[]/\\&/g')"
+    echo
+else
+    caPassword="$(echo "${2}" | sed -e 's/[]\/$*.^|[]/\\&/g')"
+fi
 
+if checkCAPassword "$caPassword"; then
+    caPassword=$(echo "${caPassword}" | sed -e 's/\\//g')
+else
+    exit 1
+fi
+
+
+if ! [[ "${3:-}" ]]
+then
+    read -r -s -p "Please enter the password to use for your pfx file: " pfxPassword
+    pfxPassword="$(echo "${pfxPassword}" | sed -e 's/[]\/$*.^|[]/\\&/g')"
+    echo
+else
+    pfxPassword="$(echo "${3}" | sed -e 's/[]\/$*.^|[]/\\&/g')"
+fi
+
+if validPassword "$pfxPassword"; then
+    pfxPassword=$(echo "${pfxPassword}" | sed -e 's/\\//g')
+else
+    exit 1
+fi
+
+if ! [[ "${4:-}" ]]
+then
+    echo
+    echo 'Email Address :'; read -r emailAddress
+    echo
+else
+    emailAddress=$4
+fi
+
+
+if ! [[ "${5:-}" ]]
+then
+    read -r -p "Do you want a password on your PEM private key? y/n: " passOnPrivateKey
+    echo
+    if [ "$passOnPrivateKey" = "y" ]; then
+        read -r -s -p "do you want to use the PFX file password for your private key? y/n: " answer
+        echo
+        if grep -q -e '[Yy]' <<< "$answer";then
+            echo "using same password for private key"
+            privateKeyPassword=$pfxPassword
+        else
+            read -r -s -p "Please enter the password to use for your private key: " privateKeyPassword
+            privateKeyPassword="$(echo "${privateKeyPassword}" | sed -e 's/[]\/$*.^|[]/\\&/g')"
+            echo
+        fi
+    else
+        privateKeyPassword=""
+    fi
+else
+    if [ "$5" = "y" ] && [ "$6" = "y" ]; then
+        echo "using same password for private key"
+        privateKeyPassword=$pfxPassword
+        passOnPrivateKey="y"
+    elif [ "$5" = "y" ] && [ "$6" = "n" ]; then
+        read -r -s -p "Please enter the password to use for your private key: " privateKeyPassword
+        privateKeyPassword="$(echo "${privateKeyPassword}" | sed -e 's/[]\/$*.^|[]/\\&/g')"
+        passOnPrivateKey="y"
+        echo
+    elif [ "$5" = "y" ]; then
+        read -r -s -p "do you want to use the PFX file password for your private key? y/n: " answer
+        echo
+        if grep -q -e '[Yy]' <<< "$answer";then
+            echo "using same password for private key"
+            privateKeyPassword=$pfxPassword
+        else
+            read -r -s -p "Please enter the password to use for your private key: " privateKeyPassword
+            privateKeyPassword="$(echo "${privateKeyPassword}" | sed -e 's/[]\/$*.^|[]/\\&/g')"
+            echo
+        fi
+    else
+        passOnPrivateKey="n"
+        privateKeyPassword=""
+    fi
+fi
+
+if [ "$passOnPrivateKey" == "y" ]; then
+    if validPassword "$privateKeyPassword"; then
+        privateKeyPassword=$(echo "${privateKeyPassword}" | sed -e 's/\\//g')
+    else
+        exit 1
+    fi
+fi
+
+
+echo "Generating key request for $certName"
+
+echo "passOnPrivateKey: $passOnPrivateKey"
 #Remove passphrase from the key. Comment the line out to keep the passphrase
-echo "Removing passphrase from key"
-openssl rsa -in usercerts/$certname.key -out usercerts/$certname.key -passin pass:$password
+if [ "$passOnPrivateKey" == "n" ]; then
+    #Generate a key
+    echo "Generating key without password"
+    openssl req -newkey rsa:2048 \
+            -subj "/CN=$certName/emailAddress=$emailAddress" \
+            -addext "keyUsage = digitalSignature, nonRepudiation, keyEncipherment, dataEncipherment" \
+            -addext "extendedKeyUsage = clientAuth, emailProtection, msEFS" \
+            -config openssl.cnf \
+            -keyform PEM \
+            -keyout usercerts/"$certName".key \
+            -passin pass:"${caPassword}" \
+            -out requests/"$certName".csr \
+            -passout pass:tempPassword \
+            -outform PEM
+    #"Removing passphrase from key"
+    echo "Removing passphrase from key"
+    openssl rsa -in usercerts/"$certName".key -out usercerts/"$certName".key -passin pass:tempPassword
+else
+    #Generate a key
+    echo "Generating key with password"
+    openssl req -newkey  rsa:2048 \
+            -subj "/CN=$certName/emailAddress=$emailAddress" \
+            -addext "keyUsage = digitalSignature, nonRepudiation, keyEncipherment, dataEncipherment" \
+            -addext "extendedKeyUsage = clientAuth, emailProtection, msEFS" \
+            -config openssl.cnf \
+            -keyform PEM \
+            -passin pass:"${caPassword}" \
+            -keyout usercerts/"$certName".key \
+            -out requests/"$certName".csr \
+            -passout pass:"$privateKeyPassword" \
+            -outform PEM
+fi
 
-openssl req -new -config openssl.cnf -key usercerts/$certname.key -sha256 -subj "/C=$C/ST=$ST/L=$L/O=$O/OU=$OU/CN=$CN/emailAddress=$emailAddress" -out usercerts/$certname.csr
+myCACert=( "$caCertPath"/*.crt )
+#Generate the cert (good for 10 years)
+echo "Signing the certificate with the CA"
+openssl ca -batch -passin pass:"${caPassword}" -config openssl.cnf -in requests/"$certName".csr -out usercerts/"$certName".crt
 
-openssl ca -batch -passin pass:$password -config openssl.cnf -in usercerts/$certname.csr -out usercerts/$certname.crt
+# Verify the cert
+echo "Verifying the cert and adding it to the serial number file"
+openssl verify -CAfile "${myCACert[0]}" usercerts/"$certName".crt
 
-openssl pkcs12 -export -clcerts -in usercerts/$certname.crt -inkey usercerts/$certname.key -out usercerts/$certname.p12 -passout pass:$password
+#Create the PFX
+echo "Creating PFX for Windows"
+
+if [ "$passOnPrivateKey" == "y" ]; then
+    openssl pkcs12 -export -clcerts -in usercerts/"$certName".crt -inkey privatekeys/"$certName".key -chain -CAfile "${myCACert[0]}" \
+    -passin pass:"$privateKeyPassword" -passout pass:"$pfxPassword" -out pfxfiles/"$certName".pfx
+else
+    openssl pkcs12 -export -clcerts -in usercerts/"$certName".crt -inkey privatekeys/"$certName".key -chain -CAfile "${myCACert[0]}" \
+    -passout pass:"$pfxPassword" -out pfxfiles/"$certName".pfx
+fi
+
+
 
 #for MacOs you need to do the following:
-security import usercerts/$certname.p12 -k ~/Library/Keychains/login.keychain
-
+#security import usercerts/$certName.p12 -k ~/Library/Keychains/login.keychain
 
 

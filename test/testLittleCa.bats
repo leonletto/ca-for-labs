@@ -29,12 +29,25 @@ setup() {
     assert_output --partial 'Data Base Updated'
 }
 
-#@test "createCA and createCert should return PFX Confirming the cert was created" {
-#    run test/testCreateCa.exp
-#    assert_output --partial 'cacerts/testca.crt'
-#    run test/testNewCert.exp
-#    assert_output --partial 'Creating PFX for Windows servers'
-#}
+@test "Test testNewUserCertNoPass should confirm cert was created" {
+    run test/testNewUserCertNoPass.exp
+    assert_output --partial 'Creating PFX for Windows'
+}
+
+@test "Test revokeUserCertNoPass should say Data Base Updated" {
+    run test/testRevokeUserCertNoPass.exp
+    assert_output --partial 'Data Base Updated'
+}
+
+@test "Test testNewUserCertWithPass should confirm cert was created" {
+    run test/testNewUserCertWithPass.exp
+    assert_output --partial 'Creating PFX for Windows'
+}
+
+@test "Test revokeUserCertWithPass should say Data Base Updated" {
+    run test/testRevokeUserCertWithPass.exp
+    assert_output --partial 'Data Base Updated'
+}
 
 
 teardown_file() {
