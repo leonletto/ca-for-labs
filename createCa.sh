@@ -69,21 +69,21 @@ then
 else
     OU=$6
 fi
-if ! [[ "${6:-}" ]]
+if ! [[ "${7:-}" ]]
 then
     echo
     echo 'Common Name (eg, fully qualified host name) :'; read -r CN
     echo
 else
-    CN=$6
+    CN=$7
 fi
-if ! [[ "${6:-}" ]]
+if ! [[ "${8:-}" ]]
 then
     echo
     echo 'Email Address :'; read -r emailAddress
     echo
 else
-    emailAddress=$6
+    emailAddress=$8
 fi
 
 # eg ./createCA.sh ubuntutest US CA Concord Me IT ubuntutest leon@ubuntutest.com
@@ -139,7 +139,7 @@ for (( ;; )); do
 		echo "Passwords do not match. Please try again."
 		VALID=false
     fi
-	if L=${#PASS1}; [[ L -lt 10 || L -gt 25 ]]; then
+	if Len=${#PASS1}; [[ Len -lt 10 || Len -gt 25 ]]; then
 		echo "Password must have a minimum of 10 characters and a maximum of 25."
 		VALID=false
     fi
@@ -202,7 +202,12 @@ sedCmd "s/yourcommonname/$CN/g" openssl.cnf
 sedCmd "s/youremailaddress/$emailAddress/g" openssl.cnf
 
 openssl genrsa -aes256 -passout pass:"$password" -out  cacerts/"$caname".key 4096
-openssl req -newkey rsa:2048 -sha256 -x509 -days 1826 -key cacerts/"$caname."key -out cacerts/"$caname".crt -passin pass:"$password"  -subj "/C=$C/ST=$ST/L=$L/O=$O/OU=$OU/CN=$CN/emailAddress=$emailAddress" -config openssl.cnf -extensions v3_ca
+case "$(uname -sr)" in
+    MINGW64*)      subj="//C=$C/ST=$ST/L=$L/O=$O/OU=$OU/CN=$CN/emailAddress=$emailAddress";;
+    *)             subj="/C=$C/ST=$ST/L=$L/O=$O/OU=$OU/CN=$CN/emailAddress=$emailAddress";;
+esac
+
+openssl req -newkey rsa:2048 -sha256 -x509 -days 1826 -key cacerts/"$caname."key -out cacerts/"$caname".crt -passin pass:"$password"  -subj "$subj" -config openssl.cnf -extensions v3_ca
 echo "1000" > serial
 echo "1000" > crl/crlnumber
 touch index.txt

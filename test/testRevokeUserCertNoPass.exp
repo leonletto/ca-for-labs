@@ -16,3 +16,4 @@ set var1 {testuser1}
 set var2 {$Test458367}
 spawn ./revokeUserCert.sh $var1 $var2
 expect -re "(?s).*Data Base Updated.*"
+expect eof

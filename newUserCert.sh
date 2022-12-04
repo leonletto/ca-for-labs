@@ -124,13 +124,18 @@ fi
 
 echo "Generating key request for $certName"
 
+case "$(uname -sr)" in
+    MINGW64*)      subj="//dummy/CN=$certName/emailAddress=$emailAddress";;
+    *)             subj="/CN=$certName/emailAddress=$emailAddress";;
+esac
+
 echo "passOnPrivateKey: $passOnPrivateKey"
 #Remove passphrase from the key. Comment the line out to keep the passphrase
 if [ "$passOnPrivateKey" == "n" ]; then
     #Generate a key
     echo "Generating key without password"
     openssl req -newkey rsa:2048 \
-            -subj "/CN=$certName/emailAddress=$emailAddress" \
+            -subj "$subj" \
             -addext "keyUsage = digitalSignature, nonRepudiation, keyEncipherment, dataEncipherment" \
             -addext "extendedKeyUsage = clientAuth, emailProtection, msEFS" \
             -config openssl.cnf \
@@ -147,7 +152,7 @@ else
     #Generate a key
     echo "Generating key with password"
     openssl req -newkey  rsa:2048 \
-            -subj "/CN=$certName/emailAddress=$emailAddress" \
+            -subj "$subj" \
             -addext "keyUsage = digitalSignature, nonRepudiation, keyEncipherment, dataEncipherment" \
             -addext "extendedKeyUsage = clientAuth, emailProtection, msEFS" \
             -config openssl.cnf \
@@ -172,10 +177,10 @@ openssl verify -CAfile "${myCACert[0]}" usercerts/"$certName".crt
 echo "Creating PFX for Windows"
 
 if [ "$passOnPrivateKey" == "y" ]; then
-    openssl pkcs12 -export -clcerts -in usercerts/"$certName".crt -inkey privatekeys/"$certName".key -chain -CAfile "${myCACert[0]}" \
+    openssl pkcs12 -export -clcerts -in usercerts/"$certName".crt -inkey usercerts/"$certName".key -chain -CAfile "${myCACert[0]}" \
     -passin pass:"$privateKeyPassword" -passout pass:"$pfxPassword" -out pfxfiles/"$certName".pfx
 else
-    openssl pkcs12 -export -clcerts -in usercerts/"$certName".crt -inkey privatekeys/"$certName".key -chain -CAfile "${myCACert[0]}" \
+    openssl pkcs12 -export -clcerts -in usercerts/"$certName".crt -inkey usercerts/"$certName".key -chain -CAfile "${myCACert[0]}" \
     -passout pass:"$pfxPassword" -out pfxfiles/"$certName".pfx
 fi
 

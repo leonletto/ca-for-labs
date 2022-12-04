@@ -98,12 +98,15 @@ sedCmd() {
     local script="$1"
     local file="$2"
     case "$(uname -sr)" in
-       Darwin*)
-         sed -i .bak "$script" "$file"
-         ;;
-       Linux*)
-         sed -i.bak -e "$script" "$file"
-         ;;
+        Darwin*)
+             sed -i .bak "$script" "$file"
+             ;;
+        Linux*)
+             sed -i.bak -e "$script" "$file"
+             ;;
+        *)
+             sed -i.bak -e "$script" "$file"
+             ;;
     esac
 }
 

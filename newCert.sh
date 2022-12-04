@@ -20,11 +20,10 @@ fi
 #email=yourdomain@gmail.com
 
 #Directories
-privateKeys=privatekeys
-caCertPath=cacerts
+#caCertPath=cacerts
 #certs=certs
 #crl=crl
-pfxFiles=pfxfiles
+#pfxFiles=pfxfiles
 
 
 
@@ -101,44 +100,50 @@ fi
 
 echo "Generating key request for $domain"
 
-
-
 #Remove passphrase from the key. Comment the line out to keep the passphrase
 if [ "$passOnPrivateKey" == "n" ]; then
     #Generate a key
-    openssl genrsa -aes256 -passout pass:tempPassword -out $privateKeys/"$domain".key 4096
+    openssl genrsa -aes256 -passout pass:tempPassword -out privatekeys/"$domain".key 4096
     #"Removing passphrase from key"
-    openssl rsa -in $privateKeys/"$domain".key -out $privateKeys/"$domain".key -passin pass:tempPassword
+    openssl rsa -in privatekeys/"$domain".key -out privatekeys/"$domain".key -passin pass:tempPassword
 else
     #Generate a key
-    openssl genrsa -aes256 -passout pass:"$privateKeyPassword" -out $privateKeys/"$domain".key 4096
+    openssl genrsa -aes256 -passout pass:"$privateKeyPassword" -out privatekeys/"$domain".key 4096
 fi
 
 # Configure the SANs for the certificate
 cp -f ./optionsSample.cnf ./options.cnf
 sedCmd "s/yourdomainname/$domain/g" options.cnf
-#((printf "\n[SAN]\nbasicConstraints=CA:FALSE\nextendedKeyUsage=serverAuth\nsubjectAltName=DNS:%s,DNS:www.%s" "$domain" "$domain")>options.cnf)
+
 
 #Create the request
 echo "Creating CSR"
+
+case "$(uname -sr)" in
+    MINGW64*)      subj="//dummy/CN=$domain";;
+    *)             subj="/CN=$domain";;
+esac
+
+echo "subj: $subj"
+
 if [ "$passOnPrivateKey" == "y" ]; then
-    openssl req -new -sha256 -key $privateKeys/"$domain".key -out requests/"$domain".csr -passin pass:"$privateKeyPassword" -subj "/CN=$domain" \
-    -extensions SAN -config <(cat ./openssl.cnf ./options.cnf)
+    openssl req -new -sha256 -key privatekeys/"$domain".key -out requests/"$domain".csr -passin pass:"$privateKeyPassword" -subj "$subj" \
+    -addext "subjectAltName = DNS:$domain" -addext "extendedKeyUsage = serverAuth, clientAuth" -config openssl.cnf
 else
-    openssl req -new -sha256 -key $privateKeys/"$domain".key -out requests/"$domain".csr -subj "/CN=$domain" \
-    -extensions SAN -config <(cat ./openssl.cnf ./options.cnf)
+    openssl req -new -sha256 -key privatekeys/"$domain".key -out requests/"$domain".csr -subj "$subj" \
+    -addext "subjectAltName = DNS:$domain" -addext "extendedKeyUsage = serverAuth, clientAuth" -config openssl.cnf
 fi
 
 
-myCACert=( "$caCertPath"/*.crt )
+myCACert=( cacerts/*.crt )
 
-command="openssl ca -batch  -passin pass:${caPassword} -config openssl.cnf requests/${domain}.csr -extensions SAN -extfile <(cat ./options.cnf) -out certs/${domain}.crt &> /dev/null"
+command="openssl ca -batch  -passin pass:${caPassword} -config openssl.cnf requests/${domain}.csr -addext 'subjectAltName = DNS:$domain' -addext 'extendedKeyUsage = serverAuth, clientAuth' -out certs/${domain}.crt &> /dev/null"
 echo "$command"
 
 #Sign the Cert
 echo "Signing the certificate with the CA"
 openssl ca -batch -passin pass:"${caPassword}" -config openssl.cnf -in requests/"$domain".csr \
--extensions SAN -extfile <(cat ./openssl.cnf ./options.cnf) -out certs/"$domain".crt
+ -out certs/"$domain".crt
 
 # Verify the cert
 echo "Verifying the cert and adding it to the serial number file"
@@ -148,11 +153,11 @@ openssl verify -CAfile "${myCACert[0]}" certs/"$domain".crt
 echo "Creating PFX for Windows servers"
 
 if [ "$passOnPrivateKey" == "y" ]; then
-    openssl pkcs12 -export -in certs/"$domain".crt -inkey $privateKeys/"$domain".key -name "$domain-(expiration date)" -chain -CAfile "${myCACert[0]}" \
-    -passin pass:"$privateKeyPassword" -passout pass:"$pfxPassword" -out $pfxFiles/"$domain".pfx
+    openssl pkcs12 -export -in certs/"$domain".crt -inkey privatekeys/"$domain".key -name "$domain-(expiration date)" -chain -CAfile "${myCACert[0]}" \
+    -passin pass:"$privateKeyPassword" -passout pass:"$pfxPassword" -out pfxfiles/"$domain".pfx
 else
-    openssl pkcs12 -export -in certs/"$domain".crt -inkey $privateKeys/"$domain".key -name "$domain-(expiration date)" -chain -CAfile "${myCACert[0]}" \
-    -passout pass:"$pfxPassword" -out $pfxFiles/"$domain".pfx
+    openssl pkcs12 -export -in certs/"$domain".crt -inkey privatekeys/"$domain".key -name "$domain-(expiration date)" -chain -CAfile "${myCACert[0]}" \
+    -passout pass:"$pfxPassword" -out pfxfiles/"$domain".pfx
 fi
 
 #
