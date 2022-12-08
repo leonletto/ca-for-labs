@@ -1,4 +1,8 @@
 #!/bin/bash
+set -o errexit
+set -o nounset
+set -o pipefail
+if [[ "${TRACE-0}" == "1" ]]; then set -o xtrace; fi
 # Some functions I am using in my scripts
 
 # These are constants which are used either here or in other code areas for littleCA
@@ -92,6 +96,40 @@ checkCAPassword() {
 
 }
 
+
+# compares two numbers n1 > n2 including floating point numbers
+lt() {
+    awk -v n1="$1" -v n2="$2" 'BEGIN {if (n1+0<n2+0) exit 0; exit 1}'
+}
+
+# compares two numbers n1 > n2 including floating point numbers
+gt() {
+    awk -v n1="$1" -v n2="$2" 'BEGIN {if (n1+0>n2+0) exit 0; exit 1}'
+}
+
+# compares two numbers n1 > n2 including floating point numbers
+ge() {
+    awk -v n1="$1" -v n2="$2" 'BEGIN {if (n1+0>=n2+0) exit 0; exit 1}'
+}
+
+# compares two numbers n1 > n2 including floating point numbers
+le() {
+    awk -v n1="$1" -v n2="$2" 'BEGIN {if (n1+0<=n2+0) exit 0; exit 1}'
+}
+
+# retrieve variables from the environment file containing name=value pairs
+# shellcheck disable=SC2002 # the cat is not a file, it is a stream
+source_env() {
+    while read -r line; do
+        read -r k v <<<"$line"
+        test="$k=$v"
+        varLength=${#test}
+        varLengthMinusOne=$((varLength - 1))
+        varMinusLastChar=${test:0:varLengthMinusOne}
+        test2=$(echo "${varMinusLastChar}" | sed -e 's/[]\/$*^|[]/\\&/g')
+        eval export "$test2"
+    done <<<"$(cat "$1" | grep -v '^#' | grep '=')"
+}
 
 
 sedCmd() {
