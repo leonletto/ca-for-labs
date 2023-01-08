@@ -1,4 +1,4 @@
-# littleCa - Create your own CA for your environment and issue and revoke certificates as needed.
+# ca-for-labs - formerly littleCa - Create your own CA for your environment and issue and revoke certificates as needed.
 
 ## Features:
 
@@ -24,7 +24,7 @@ chmod +x createCa.sh
 
 ### Issue server certificates for your environment manually
 
-###       
+###        
 
 ```shell
 chmod +x newCert.sh
