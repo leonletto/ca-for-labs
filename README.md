@@ -11,7 +11,7 @@
 ## Requirements:
 
 * Linux or MacOS
-* openssl 1.1.1 or higher or LibreSSL 3.0.2 or higher
+* openssl 1.1.1 or higher or LibreSSL 2.8.3 or higher
 
 ## Usage:
 
@@ -24,7 +24,7 @@ chmod +x createCa.sh
 
 ### Issue server certificates for your environment manually
 
-###         
+###          
 
 ```shell
 chmod +x newCert.sh
