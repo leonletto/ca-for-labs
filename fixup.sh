@@ -19,6 +19,8 @@ rm -f openssl.cnf
 rm -f openssl.cnf.*
 rm -f options.cnf
 rm -f options.cnf.*
+rm -f userCertoptions.cnf
+rm -f userCertoptions.cnf.*
 rm -f serial
 rm -f serial.old
 rm -f littleCAnginx.conf

@@ -121,48 +121,102 @@ if [ "$passOnPrivateKey" == "y" ]; then
     fi
 fi
 
-
 echo "Generating key request for $certName"
+
+
+#Get the openssl version
+opensslType=$(openssl version | cut -d' ' -f1)
+opensslVersion=$(openssl version | cut -d' ' -f2)
+opensslNewVersion=""
+if [ "$opensslType" == "LibreSSL" ]; then
+    if ge "$opensslVersion" "3.0.2"; then
+        opensslNewVersion="true"
+    else
+        opensslNewVersion="false"
+    fi
+else
+    if ge "$opensslVersion" "1.1.1"; then
+        opensslNewVersion="true"
+    else
+        opensslNewVersion="false"
+    fi
+fi
+
 
 case "$(uname -sr)" in
     MINGW64*)      subj="//dummy/CN=$certName/emailAddress=$emailAddress";;
     *)             subj="/CN=$certName/emailAddress=$emailAddress";;
 esac
 
-echo "passOnPrivateKey: $passOnPrivateKey"
-#Remove passphrase from the key. Comment the line out to keep the passphrase
-if [ "$passOnPrivateKey" == "n" ]; then
-    #Generate a key
-    echo "Generating key without password"
-    openssl req -newkey rsa:2048 \
-            -subj "$subj" \
-            -addext "keyUsage = digitalSignature, nonRepudiation, keyEncipherment, dataEncipherment" \
-            -addext "extendedKeyUsage = clientAuth, emailProtection, msEFS" \
-            -config openssl.cnf \
-            -keyform PEM \
-            -keyout usercerts/"$certName".key \
-            -passin pass:"${caPassword}" \
-            -out requests/"$certName".csr \
-            -passout pass:tempPassword \
-            -outform PEM
-    #"Removing passphrase from key"
-    echo "Removing passphrase from key"
-    openssl rsa -in usercerts/"$certName".key -out usercerts/"$certName".key -passin pass:tempPassword
+if [ "$opensslNewVersion" == "true" ]; then
+    echo "passOnPrivateKey: $passOnPrivateKey"
+    #Remove passphrase from the key. Comment the line out to keep the passphrase
+    if [ "$passOnPrivateKey" == "n" ]; then
+        #Generate a key
+        echo "Generating key without password"
+        openssl req -newkey rsa:2048 \
+                -subj "$subj" \
+                -addext "keyUsage = digitalSignature, nonRepudiation, keyEncipherment, dataEncipherment" \
+                -addext "extendedKeyUsage = clientAuth, emailProtection, msEFS" \
+                -config openssl.cnf \
+                -keyform PEM \
+                -keyout usercerts/"$certName".key \
+                -passin pass:"${caPassword}" \
+                -out requests/"$certName".csr \
+                -passout pass:tempPassword \
+                -outform PEM
+        #"Removing passphrase from key"
+        echo "Removing passphrase from key"
+        openssl rsa -in usercerts/"$certName".key -out usercerts/"$certName".key -passin pass:tempPassword
+    else
+        #Generate a key
+        echo "Generating key with password"
+        openssl req -newkey  rsa:2048 \
+                -subj "$subj" \
+                -addext "keyUsage = digitalSignature, nonRepudiation, keyEncipherment, dataEncipherment" \
+                -addext "extendedKeyUsage = clientAuth, emailProtection, msEFS" \
+                -config openssl.cnf \
+                -keyform PEM \
+                -passin pass:"${caPassword}" \
+                -keyout usercerts/"$certName".key \
+                -out requests/"$certName".csr \
+                -passout pass:"$privateKeyPassword" \
+                -outform PEM
+    fi
 else
-    #Generate a key
-    echo "Generating key with password"
-    openssl req -newkey  rsa:2048 \
-            -subj "$subj" \
-            -addext "keyUsage = digitalSignature, nonRepudiation, keyEncipherment, dataEncipherment" \
-            -addext "extendedKeyUsage = clientAuth, emailProtection, msEFS" \
-            -config openssl.cnf \
-            -keyform PEM \
-            -passin pass:"${caPassword}" \
-            -keyout usercerts/"$certName".key \
-            -out requests/"$certName".csr \
-            -passout pass:"$privateKeyPassword" \
-            -outform PEM
+     ( (printf "\nkeyUsage=digitalSignature,nonRepudiation,keyEncipherment,dataEncipherment\nextendedKeyUsage=clientAuth,emailProtection,msEFS")>userCertoptions.cnf )
+
+    #Remove passphrase from the key. Comment the line out to keep the passphrase
+    if [ "$passOnPrivateKey" == "n" ]; then
+        #Generate a key
+        echo "Generating key without password"
+        openssl req -newkey rsa:2048 \
+                -subj "$subj" \
+                -config <(cat ./openssl.cnf ./userCertoptions.cnf) \
+                -keyform PEM \
+                -keyout usercerts/"$certName".key \
+                -passin pass:"${caPassword}" \
+                -out requests/"$certName".csr \
+                -passout pass:tempPassword \
+                -outform PEM
+        #"Removing passphrase from key"
+        echo "Removing passphrase from key"
+        openssl rsa -in usercerts/"$certName".key -out usercerts/"$certName".key -passin pass:tempPassword
+    else
+        #Generate a key
+        echo "Generating key with password"
+        openssl req -newkey  rsa:2048 \
+                -subj "$subj" \
+                -config <(cat ./openssl.cnf ./userCertoptions.cnf) \
+                -keyform PEM \
+                -passin pass:"${caPassword}" \
+                -keyout usercerts/"$certName".key \
+                -out requests/"$certName".csr \
+                -passout pass:"$privateKeyPassword" \
+                -outform PEM
+    fi
 fi
+
 
 myCACert=( "$caCertPath"/*.crt )
 #Generate the cert (good for 10 years)
