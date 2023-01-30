@@ -4,7 +4,7 @@ set -o nounset
 set -o pipefail
 if [[ "${TRACE-0}" == "1" ]]; then set -o xtrace; fi
 
-. ./bashLibrary.sh
+. ./common.sh
 
 
 echo 'Please Answer All of the questions in as much detail as you like.'
@@ -97,7 +97,7 @@ fi
 
 declare password
 VALID=true
-validCharacters='[\~\!\@\#\$\%\^\&\*\(\)\_\+]'
+#validCharacters='[\~\!\@\#\$\%\^\&\*\(\)\_\+]'
 #~	Tilde
 #!	Exclamation
 #@	At sign

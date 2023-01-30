@@ -4,12 +4,10 @@ set -o nounset
 set -o pipefail
 if [[ "${TRACE-0}" == "1" ]]; then set -o xtrace; fi
 
-. ./bashLibrary.sh
-
-if [ -f .env ]; then
-    source .env
-
-fi
+#if [ -f .env ]; then
+#    source .env
+#
+#fi
 
 #Change to your company details
 #country=US
@@ -26,7 +24,7 @@ fi
 #pfxFiles=pfxfiles
 
 
-
+. ./common.sh
 
 if ! [[ "${1:-}" ]]
 then

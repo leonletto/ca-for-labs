@@ -3,17 +3,17 @@ set -o errexit
 set -o nounset
 set -o pipefail
 if [[ "${TRACE-0}" == "1" ]]; then set -o xtrace; fi
-
-. ./bashLibrary.sh
-
-if [ -f .env ]; then
-    source .env
-
-fi
+#
+#. ./bashLibrary.sh
+#
+#if [ -f .env ]; then
+#    source .env
+#
+#fi
 
 # Example Usage: ./newUserCert.sh "user1" '$Test458367' "password"
 
-caCertPath=cacerts
+. ./common.sh
 
 
 if ! [[ "${1:-}" ]]
