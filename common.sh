@@ -18,7 +18,8 @@ sedCmd() {
 }
 
 # These are constants which are used either here or in other code areas
-validCharacters='[\~\!\@\#\$\%\^\*\_\+\-\=\{\}\[\]\:\,\.\/]'
+#validCharacters='[\~\!\@\#\$\%\^\*\_\+\-\=\{\}\[\]\:\,\.\/]'
+validCharacters='[\~\!\@\#\$\%\^\*\_\+]'
 invalidCharacters='[\`\&\(\)\|\\\"\;\<\>\?]'
 
 
