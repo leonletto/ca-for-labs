@@ -110,28 +110,11 @@ else
     openssl genrsa -aes256 -passout pass:"$privateKeyPassword" -out privatekeys/"$domain".key 4096
 fi
 
-# Configure the SANs for the certificate
+# Configure the SANs and extensions for the certificate
 cp -f ./optionsSample.cnf ./options.cnf
 sedCmd "s/yourdomainname/$domain/g" options.cnf
 
-#Get the openssl version
-opensslType=$(openssl version | cut -d' ' -f1)
-opensslVersion=$(openssl version | cut -d' ' -f2)
-opensslNewVersion=""
-if [ "$opensslType" == "LibreSSL" ]; then
-    if ge "$opensslVersion" "3.0.2"; then
-        opensslNewVersion="true"
-    else
-        opensslNewVersion="false"
-    fi
-else
-    if ge "$opensslVersion" "1.1.1"; then
-        opensslNewVersion="true"
-    else
-        opensslNewVersion="false"
-    fi
-fi
-
+# Configure the subject for the certificate
 case "$(uname -sr)" in
     MINGW64*)      subj="//dummy/CN=$domain";;
     *)             subj="/CN=$domain";;
@@ -140,32 +123,27 @@ esac
 echo "subj: $subj"
 
 
-if [ "$opensslNewVersion" == "true" ]; then
-    #Create the request
-    echo "Creating CSR"
 
-    if [ "$passOnPrivateKey" == "y" ]; then
-        openssl req -new -sha256 -key privatekeys/"$domain".key -out requests/"$domain".csr -passin pass:"$privateKeyPassword" -subj "$subj" \
-        -addext "subjectAltName = DNS:$domain" -addext "extendedKeyUsage = serverAuth, clientAuth" -config openssl.cnf
-    else
-        openssl req -new -sha256 -key privatekeys/"$domain".key -out requests/"$domain".csr -subj "$subj" \
-        -addext "subjectAltName = DNS:$domain" -addext "extendedKeyUsage = serverAuth, clientAuth" -config openssl.cnf
-    fi
+#Create the request
+echo "Creating CSR"
 
-else
-    #Create the request
-    echo "Creating CSR"
+if [ "$passOnPrivateKey" == "y" ]; then
     openssl req -new -sha256 -key privatekeys/"$domain".key -out requests/"$domain".csr -passin pass:"$privateKeyPassword" -subj "$subj" \
     -extensions SAN -config <(cat ./openssl.cnf ./options.cnf)
-
+else
+    openssl req -new -sha256 -key privatekeys/"$domain".key -out requests/"$domain".csr -subj "$subj" \
+    -extensions SAN -config <(cat ./openssl.cnf ./options.cnf)
 fi
+
 
 myCACert=( cacerts/*.crt )
 
 #Sign the Cert
 echo "Signing the certificate with the CA"
-openssl ca -batch -passin pass:"${caPassword}" -config openssl.cnf -in requests/"$domain".csr \
+openssl ca -batch -passin pass:"${caPassword}" -extensions SAN -extfile ./options.cnf -config openssl.cnf  -in requests/"$domain".csr \
  -out certs/"$domain".crt
+
+rm options.cnf
 
 # Verify the cert
 echo "Verifying the cert and adding it to the serial number file"
