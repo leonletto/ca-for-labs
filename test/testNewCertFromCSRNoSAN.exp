@@ -1,0 +1,19 @@
+#!/usr/bin/expect -f
+
+set force_conservative 0  ;# set to 1 to force conservative mode even if
+			  ;# script wasn't run conservatively originally
+if {$force_conservative} {
+	set send_slow {1 .1}
+	proc send {ignore arg} {
+		sleep .1
+		exp_send -s -- $arg
+	}
+}
+
+
+set timeout -1
+set var1 {$Test458367}
+spawn ./newCertFromCSR.sh test/testdata/testrequest.txt $var1
+expect -exact "CA Password accepted.\r"
+expect -re "(?s).*certs//.*: OK\r"
+expect eof

@@ -24,7 +24,7 @@ chmod +x createCa.sh
 
 ### Issue server certificates for your environment manually
 
-###          
+###           
 
 ```shell
 chmod +x newCert.sh
@@ -39,6 +39,30 @@ shell*
 ```shell
 chmod +x newCert.sh
 ./newCert.sh myhost.mydomain.com 'myCAPassword' 'myPFXPassword' 'myPrivateKeyPassword'
+```
+
+### Issue server certificates for your environment with your CSR file
+
+Save your CSR file in the same directory as the scripts. The CSR file can have any name you want. The script will
+prompt you for the name of the CSR file if you do not supply it as an argument.
+
+###           
+
+```shell
+chmod +x newCertFromCSR.sh
+./newCert.sh test.com.csr
+```
+
+### Issue server certificates for your environment with your CSR file and automatically
+
+Save your CSR file in the same directory as the scripts. The CSR file can have any name you want. The script will
+prompt you for the name of the CSR file if you do not supply it as an argument.
+
+###           
+
+```shell
+chmod +x newCertFromCSR.sh
+./newCert.sh test.com.csr 'myCAPassword'
 ```
 
 ### Issue user certificates for your environment (working on it...)
