@@ -71,6 +71,7 @@ unstructuredName		= yourcaname
 
 [ usr_cert ]
 subjectKeyIdentifier = hash
+authorityKeyIdentifier=keyid:always,issuer:always
 basicConstraints     = CA:FALSE
 keyUsage             = digitalSignature, keyEncipherment
 nsComment            = "OpenSSL Generated Certificate"
@@ -82,7 +83,7 @@ crlDistributionPoints = URI:http://crl.yourcommonname/yourcaname.crl.pem
 # CRL extensions.
 # Only issuerAltName and authorityKeyIdentifier make any sense in a CRL.
 # issuerAltName=issuer:copy
-authorityKeyIdentifier=keyid:always
+authorityKeyIdentifier=keyid:always,issuer:always
 
 [ v3_ca ]
 basicConstraints = CA:TRUE
@@ -99,6 +100,7 @@ keyUsage = critical, digitalSignature, cRLSign, keyCertSign
 
 [ v3_req ]
 subjectKeyIdentifier = hash
+authorityKeyIdentifier = keyid:always,issuer:always
 basicConstraints     = CA:FALSE
 keyUsage             = digitalSignature, keyEncipherment
 subjectAltName       = @alternate_names

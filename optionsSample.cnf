@@ -1,5 +1,6 @@
 
 [SAN]
 basicConstraints=CA:FALSE
+authorityKeyIdentifier=keyid,issuer
 extendedKeyUsage=serverAuth,clientAuth
 subjectAltName=DNS:yourdomainname,DNS:www.yourdomainname
