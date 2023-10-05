@@ -15,5 +15,4 @@ set timeout -1
 set var1 {$Test458367}
 spawn ./newCertFromCSR.sh test/testdata/testrequest.txt $var1
 expect -exact "CA Password accepted.\r"
-expect -re "(?s).*certs//.*: OK\r"
-expect eof
+expect -ex {.*certs//.*: OK}

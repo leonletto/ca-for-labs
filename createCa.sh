@@ -200,6 +200,8 @@ sedCmd "s/yourorgname/$O/g" openssl.cnf
 sedCmd "s/yourorgunitname/$OU/g" openssl.cnf
 sedCmd "s/yourcommonname/$CN/g" openssl.cnf
 sedCmd "s/youremailaddress/$emailAddress/g" openssl.cnf
+sedCmd "s|http://crl\.yourorgname/yourcaname\.crl\.pem|http://crl\.$CN/$caname.crl.pem|g" openssl.cnf
+echo "crlDistributionPoints = URI:http://crl.$CN/$caname.crl.pem" >> optionsSample.cnf
 
 openssl genrsa -aes256 -passout pass:"$password" -out  cacerts/"$caname".key 4096
 case "$(uname -sr)" in

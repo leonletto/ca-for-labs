@@ -4,26 +4,6 @@ set -o nounset
 set -o pipefail
 if [[ "${TRACE-0}" == "1" ]]; then set -o xtrace; fi
 
-#if [ -f .env ]; then
-#    source .env
-#
-#fi
-
-#Change to your company details
-#country=US
-#state=Georgia
-#locality=Atlanta
-#organization=yourdomain.com
-#organizationalunit=IT
-#email=yourdomain@gmail.com
-
-#Directories
-#caCertPath=cacerts
-#certs=certs
-#crl=crl
-#pfxFiles=pfxfiles
-
-
 . ./common.sh
 
 
@@ -129,10 +109,10 @@ echo "Creating CSR"
 
 if [ "$passOnPrivateKey" == "y" ]; then
     openssl req -new -sha256 -key privatekeys/"$domain".key -out requests/"$domain".csr -passin pass:"$privateKeyPassword" -subj "$subj" \
-    -extensions SAN -config <(cat ./openssl.cnf ./options.cnf)
+    -config <(cat ./openssl.cnf ./options.cnf) -extensions SAN
 else
     openssl req -new -sha256 -key privatekeys/"$domain".key -out requests/"$domain".csr -subj "$subj" \
-    -extensions SAN -config <(cat ./openssl.cnf ./options.cnf)
+    -config <(cat ./openssl.cnf ./options.cnf) -extensions SAN
 fi
 
 
@@ -140,7 +120,7 @@ myCACert=( cacerts/*.crt )
 
 #Sign the Cert
 echo "Signing the certificate with the CA"
-openssl ca -batch -passin pass:"${caPassword}" -extensions SAN -extfile ./options.cnf -config openssl.cnf  -in requests/"$domain".csr \
+openssl ca -batch -passin pass:"${caPassword}" -extfile ./options.cnf -config openssl.cnf -extensions SAN -in requests/"$domain".csr \
  -out certs/"$domain".crt
 
 rm options.cnf

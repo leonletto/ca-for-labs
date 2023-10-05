@@ -118,3 +118,4 @@ git submodule add https://github.com/bats-core/bats-file.git test/test_helper/ba
 chmod +x ./createCa.sh ./fixup.sh ./newCert.sh ./newUserCert.sh ./revokeCert.sh ./revokeUserCert.sh
 ./test/bats/bin/bats test/testLittleCa.bats
 ```
+

@@ -31,9 +31,15 @@ else
 fi
 
 openssl ca -batch -config openssl.cnf -passin pass:"${caPassword}" -revoke certs/"$hostname".crt
-mv certs/"$hostname".crt revoked/
-mv privatekeys/"$hostname".key revoked/
-mv pfxfiles/"$hostname".pfx revoked/
+if [ -f certs/"$hostname".crt ]; then
+    mv certs/"$hostname".crt revoked/
+fi
+if [ -f privatekeys/"$hostname".key ]; then
+    mv privatekeys/"$hostname".key revoked/
+fi
+if [ -f pfxfiles/"$hostname".pfx ]; then
+    mv pfxfiles/"$hostname".pfx revoked/
+fi
 openssl ca -batch -config openssl.cnf -passin pass:"${caPassword}" -gencrl -out crl/littleCA.crl.pem
 
 

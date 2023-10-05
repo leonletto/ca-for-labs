@@ -49,8 +49,10 @@ done <<< "$sanCheck"
 
 if [[ "$sanExists" == "0" ]]; then
     echo "No SANs found in the CSR"
-    cp -f ./optionsSample.cnf ./options.cnf
-    sedCmd "s/yourdomainname/$domain/g" options.cnf
+    #Sign the Cert
+    echo "Signing the certificate with the CA"
+    openssl ca -batch -passin pass:"${caPassword}" -extensions no_san_server_cert -config openssl.cnf  -in "$csrFileName" \
+     -out certs/"$domain".crt
 else
     echo "SANs found in the CSR"
     sans=$(openssl req -in "$csrFileName" -noout -text | grep -A2 "X509v3 Subject Alternative Name:" | grep DNS | sed -e "s/DNS://g" | sed -e "s/,//g" | sed -e "s/^[[:space:]]*//g")
@@ -61,12 +63,13 @@ else
     sanText=$(echo "$sanText" | sed -e 's/,$//g')
     cp -f ./optionsSample.cnf ./options.cnf
     sedCmd "s/DNS:yourdomainname,DNS:www.yourdomainname/$sanText/g" options.cnf
+
+    #Sign the Cert
+    echo "Signing the certificate with the CA"
+    openssl ca -batch -passin pass:"${caPassword}" -extensions SAN -extfile ./options.cnf -config openssl.cnf  -in "$csrFileName" \
+     -out certs/"$domain".crt
 fi
 
-#Sign the Cert
-echo "Signing the certificate with the CA"
-openssl ca -batch -passin pass:"${caPassword}" -extensions SAN -extfile ./options.cnf -config openssl.cnf  -in "$csrFileName" \
- -out certs/"$domain".crt
 
 rm options.cnf
 

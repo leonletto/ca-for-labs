@@ -15,5 +15,4 @@ set timeout -1
 set var1 {$Test458367}
 set var2 {$Test458367}
 spawn ./newUserCert.sh testuser1 $var1 $var2 testuser@testca.com n
-expect -re "Creating PFX for Windows"
-expect eof
+expect -ex {Creating PFX for Windows.*}

@@ -156,9 +156,8 @@ if [ "$opensslNewVersion" == "true" ]; then
         echo "Generating key without password"
         openssl req -newkey rsa:2048 \
                 -subj "$subj" \
-                -addext "keyUsage = digitalSignature, nonRepudiation, keyEncipherment, dataEncipherment" \
-                -addext "extendedKeyUsage = clientAuth, emailProtection, msEFS" \
                 -config openssl.cnf \
+                -extensions user_cert \
                 -keyform PEM \
                 -keyout usercerts/"$certName".key \
                 -passin pass:"${caPassword}" \
@@ -173,9 +172,8 @@ if [ "$opensslNewVersion" == "true" ]; then
         echo "Generating key with password"
         openssl req -newkey  rsa:2048 \
                 -subj "$subj" \
-                -addext "keyUsage = digitalSignature, nonRepudiation, keyEncipherment, dataEncipherment" \
-                -addext "extendedKeyUsage = clientAuth, emailProtection, msEFS" \
                 -config openssl.cnf \
+                -extensions user_cert \
                 -keyform PEM \
                 -passin pass:"${caPassword}" \
                 -keyout usercerts/"$certName".key \
@@ -184,7 +182,7 @@ if [ "$opensslNewVersion" == "true" ]; then
                 -outform PEM
     fi
 else
-     ( (printf "\nkeyUsage=digitalSignature,nonRepudiation,keyEncipherment,dataEncipherment\nextendedKeyUsage=clientAuth,emailProtection,msEFS")>userCertoptions.cnf )
+#     ( (printf "\nkeyUsage=digitalSignature,nonRepudiation,keyEncipherment,dataEncipherment\nextendedKeyUsage=clientAuth,emailProtection,msEFS")>userCertoptions.cnf )
 
     #Remove passphrase from the key. Comment the line out to keep the passphrase
     if [ "$passOnPrivateKey" == "n" ]; then
@@ -192,7 +190,7 @@ else
         echo "Generating key without password"
         openssl req -newkey rsa:2048 \
                 -subj "$subj" \
-                -config <(cat ./openssl.cnf ./userCertoptions.cnf) \
+                -config openssl.cnf -extensions user_cert \
                 -keyform PEM \
                 -keyout usercerts/"$certName".key \
                 -passin pass:"${caPassword}" \
@@ -207,7 +205,7 @@ else
         echo "Generating key with password"
         openssl req -newkey  rsa:2048 \
                 -subj "$subj" \
-                -config <(cat ./openssl.cnf ./userCertoptions.cnf) \
+                -config openssl.cnf -extensions user_cert \
                 -keyform PEM \
                 -passin pass:"${caPassword}" \
                 -keyout usercerts/"$certName".key \
@@ -218,10 +216,10 @@ else
 fi
 
 
-myCACert=( "$caCertPath"/*.crt )
+myCACert=( cacerts/*.crt )
 #Generate the cert (good for 10 years)
 echo "Signing the certificate with the CA"
-openssl ca -batch -passin pass:"${caPassword}" -config openssl.cnf -in requests/"$certName".csr -out usercerts/"$certName".crt
+openssl ca -batch -passin pass:"${caPassword}" -config openssl.cnf -extensions user_cert -in requests/"$certName".csr -out usercerts/"$certName".crt
 
 # Verify the cert
 echo "Verifying the cert and adding it to the serial number file"

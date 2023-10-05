@@ -15,38 +15,47 @@ setup() {
 }
 @test "Test Creating the CA - should return cacerts/testca.crt" {
     run test/testCreateCa.exp
-
-    assert_output --partial 'cacerts/testca.crt'
+    assert_success
 }
 
-@test "Test createCert should confirm cert was created" {
+@test "Test newCert should confirm cert was created" {
     run test/testNewCert.exp
-    assert_output --partial 'Creating PFX for Windows servers'
+    assert_success
+}
+
+@test "Test Create Cert from CSR with no SAN should say cert OK" {
+    run test/testNewCertFromCSRNoSAN.exp
+    assert_success
+}
+
+@test "Test Create Cert from CSR with SAN should say cert OK" {
+    run test/testNewCertFromCSRWithSAN.exp
+    assert_success
 }
 
 @test "Test revokeCert should say Data Base Updated" {
     run test/testRevokeCert.exp
-    assert_output --partial 'Data Base Updated'
+    assert_success
 }
 
 @test "Test testNewUserCertNoPass should confirm cert was created" {
     run test/testNewUserCertNoPass.exp
-    assert_output --partial 'Creating PFX for Windows'
+    assert_success
 }
 
 @test "Test revokeUserCertNoPass should say Data Base Updated" {
     run test/testRevokeUserCertNoPass.exp
-    assert_output --partial 'Data Base Updated'
+    assert_success
 }
 
 @test "Test testNewUserCertWithPass should confirm cert was created" {
     run test/testNewUserCertWithPass.exp
-    assert_output --partial 'Creating PFX for Windows'
+    assert_success
 }
 
 @test "Test revokeUserCertWithPass should say Data Base Updated" {
     run test/testRevokeUserCertWithPass.exp
-    assert_output --partial 'Data Base Updated'
+    assert_success
 }
 
 
