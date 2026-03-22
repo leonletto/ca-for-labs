@@ -55,7 +55,7 @@ if [[ "$sanExists" == "0" ]]; then
     echo "No SANs found in the CSR"
     #Sign the Cert
     echo "Signing the certificate with the CA"
-    openssl ca -batch -passin file:"$ca_passfile" -extensions no_san_server_cert -config openssl.cnf  -in "$csrFileName" \
+    openssl ca -batch -days "$CERT_DAYS" -passin file:"$ca_passfile" -extensions no_san_server_cert -config openssl.cnf  -in "$csrFileName" \
      -out certs/"$domain".crt
 else
     echo "SANs found in the CSR"
@@ -70,7 +70,7 @@ else
 
     #Sign the Cert
     echo "Signing the certificate with the CA"
-    openssl ca -batch -passin file:"$ca_passfile" -extensions SAN -extfile ./options.cnf -config openssl.cnf  -in "$csrFileName" \
+    openssl ca -batch -days "$CERT_DAYS" -passin file:"$ca_passfile" -extensions SAN -extfile ./options.cnf -config openssl.cnf  -in "$csrFileName" \
      -out certs/"$domain".crt
 fi
 

@@ -219,7 +219,7 @@ case "$(uname -sr)" in
     *)             subj="/C=$C/ST=$ST/L=$L/O=$O/OU=$OU/CN=$CN/emailAddress=$emailAddress";;
 esac
 
-openssl req -newkey rsa:2048 -sha256 -x509 -days 1826 -key cacerts/"$caname."key -out cacerts/"$caname".crt -passin file:"$pw_passfile"  -subj "$subj" -config openssl.cnf -extensions v3_ca
+openssl req -newkey rsa:2048 -sha256 -x509 -days "$CA_CERT_DAYS" -key cacerts/"$caname."key -out cacerts/"$caname".crt -passin file:"$pw_passfile"  -subj "$subj" -config openssl.cnf -extensions v3_ca
 echo "1000" > serial
 echo "1000" > crl/crlnumber
 touch index.txt

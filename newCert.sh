@@ -127,7 +127,7 @@ myCACert=( cacerts/*.crt )
 
 #Sign the Cert
 echo "Signing the certificate with the CA"
-openssl ca -batch -passin file:"$ca_passfile" -extfile ./options.cnf -config openssl.cnf -extensions SAN -in requests/"$domain".csr \
+openssl ca -batch -days "$CERT_DAYS" -passin file:"$ca_passfile" -extfile ./options.cnf -config openssl.cnf -extensions SAN -in requests/"$domain".csr \
  -out certs/"$domain".crt
 
 rm options.cnf

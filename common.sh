@@ -112,6 +112,32 @@ cleanup_passfiles() {
 
 trap cleanup_passfiles EXIT
 
+# Validate that a value is a positive integer (for certificate validity days).
+# Usage: validateDays "$value" "label" || exit 1
+validateDays() {
+    local value="$1"
+    local label="${2:-days}"
+
+    if [[ -z "$value" ]]; then
+        echo "Error: ${label} cannot be empty." >&2
+        return 1
+    fi
+
+    if ! [[ "$value" =~ ^[1-9][0-9]*$ ]]; then
+        echo "Error: ${label} must be a positive integer." >&2
+        return 1
+    fi
+
+    return 0
+}
+
+# Certificate validity periods (days), configurable via environment variables.
+CA_CERT_DAYS="${CA_CERT_DAYS:-1826}"
+CERT_DAYS="${CERT_DAYS:-365}"
+
+validateDays "$CA_CERT_DAYS" "CA_CERT_DAYS" || exit 1
+validateDays "$CERT_DAYS" "CERT_DAYS" || exit 1
+
 sedCmd() {
     local script="$1"
     local file="$2"

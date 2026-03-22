@@ -228,7 +228,7 @@ fi
 myCACert=( cacerts/*.crt )
 #Generate the cert (good for 10 years)
 echo "Signing the certificate with the CA"
-openssl ca -batch -passin file:"$ca_passfile" -config openssl.cnf -extensions user_cert -in requests/"$certName".csr -out usercerts/"$certName".crt
+openssl ca -batch -days "$CERT_DAYS" -passin file:"$ca_passfile" -config openssl.cnf -extensions user_cert -in requests/"$certName".csr -out usercerts/"$certName".crt
 
 # Verify the cert
 echo "Verifying the cert and adding it to the serial number file"
