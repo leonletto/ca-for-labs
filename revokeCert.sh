@@ -40,7 +40,8 @@ fi
 if [ -f pfxfiles/"$hostname".pfx ]; then
     mv pfxfiles/"$hostname".pfx revoked/
 fi
-openssl ca -batch -config openssl.cnf -passin pass:"${caPassword}" -gencrl -out crl/littleCA.crl.pem
+caname=$(basename "$caCertPath"/*.key .key)
+openssl ca -batch -config openssl.cnf -passin pass:"${caPassword}" -gencrl -out crl/"$caname".crl.pem
 
 
 
