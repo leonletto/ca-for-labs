@@ -52,7 +52,7 @@ validPassword() {
             echo "Password accepted."
             return 0
         else
-            echo "Invalid password: $checkPassword"
+            echo "Invalid password."
             echo "Your Password contains invalid special characters eg: ${invalidCharacters//\\/}."
             echo "Valid special characters are ${validCharacters//\\/}"
             read -r -s -p "Please re-enter the password: " checkPassword
