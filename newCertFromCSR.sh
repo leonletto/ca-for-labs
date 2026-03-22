@@ -4,6 +4,34 @@ set -o nounset
 set -o pipefail
 if [[ "${TRACE-0}" == "1" ]]; then set -o xtrace; fi
 
+show_help() {
+    cat <<'HELP'
+Usage: ./newCertFromCSR.sh [CSR_FILE [CA_PASSWORD]]
+
+Sign a certificate from an existing Certificate Signing Request (CSR).
+
+Arguments (all optional — interactive prompts if omitted):
+  CSR_FILE      Path to the CSR file to sign
+  CA_PASSWORD   Password for the CA private key
+
+Options:
+  -h, --help    Show this help message and exit
+
+Environment:
+  TRACE=1       Enable shell tracing (set -x)
+
+Examples:
+  ./newCertFromCSR.sh
+  ./newCertFromCSR.sh requests/myserver.csr
+  ./newCertFromCSR.sh requests/myserver.csr "CaPass123!"
+HELP
+    exit 0
+}
+
+if [[ "${1:-}" == "-h" ]] || [[ "${1:-}" == "--help" ]]; then
+    show_help
+fi
+
 . ./common.sh
 
 
