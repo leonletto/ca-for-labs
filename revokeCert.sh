@@ -4,6 +4,34 @@ set -o nounset
 set -o pipefail
 if [[ "${TRACE-0}" == "1" ]]; then set -o xtrace; fi
 
+show_help() {
+    cat <<'HELP'
+Usage: ./revokeCert.sh [HOSTNAME [CA_PASSWORD]]
+
+Revoke a server certificate and update the CRL.
+
+Arguments (all optional — interactive prompts if omitted):
+  HOSTNAME      Server name (FQDN) of the certificate to revoke
+  CA_PASSWORD   Password for the CA private key
+
+Options:
+  -h, --help    Show this help message and exit
+
+Environment:
+  TRACE=1       Enable shell tracing (set -x)
+
+Examples:
+  ./revokeCert.sh
+  ./revokeCert.sh myserver.example.com
+  ./revokeCert.sh myserver.example.com "CaPass123!"
+HELP
+    exit 0
+}
+
+if [[ "${1:-}" == "-h" ]] || [[ "${1:-}" == "--help" ]]; then
+    show_help
+fi
+
 . ./common.sh
 
 if ! [[ "${1:-}" ]]

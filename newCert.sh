@@ -4,6 +4,37 @@ set -o nounset
 set -o pipefail
 if [[ "${TRACE-0}" == "1" ]]; then set -o xtrace; fi
 
+show_help() {
+    cat <<'HELP'
+Usage: ./newCert.sh [DOMAIN [CA_PASSWORD [PFX_PASSWORD [PRIVATE_KEY_PASSWORD]]]]
+
+Create a new server certificate signed by the CA.
+
+Arguments (all optional — interactive prompts if omitted):
+  DOMAIN                Server name / FQDN for the certificate
+  CA_PASSWORD           Password for the CA private key
+  PFX_PASSWORD          Password for the exported PFX file
+  PRIVATE_KEY_PASSWORD  Password for the PEM private key (omit to be prompted
+                        whether to set one)
+
+Options:
+  -h, --help    Show this help message and exit
+
+Environment:
+  TRACE=1       Enable shell tracing (set -x)
+
+Examples:
+  ./newCert.sh
+  ./newCert.sh localhost
+  ./newCert.sh myserver.example.com "CaPass123!" "PfxPass456!"
+HELP
+    exit 0
+}
+
+if [[ "${1:-}" == "-h" ]] || [[ "${1:-}" == "--help" ]]; then
+    show_help
+fi
+
 . ./common.sh
 
 

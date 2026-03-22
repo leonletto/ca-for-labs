@@ -13,6 +13,38 @@ if [[ "${TRACE-0}" == "1" ]]; then set -o xtrace; fi
 
 # Example Usage: ./newUserCert.sh "user1" '$Test458367' "password"
 
+show_help() {
+    cat <<'HELP'
+Usage: ./newUserCert.sh [CERT_NAME [CA_PASSWORD [PFX_PASSWORD [EMAIL [PASS_ON_KEY [REUSE_PFX_PASS]]]]]]
+
+Create a new user/client certificate signed by the CA.
+
+Arguments (all optional — interactive prompts if omitted):
+  CERT_NAME       Subject name (username, email, or SID)
+  CA_PASSWORD     Password for the CA private key
+  PFX_PASSWORD    Password for the exported PFX file
+  EMAIL           Email address for the certificate
+  PASS_ON_KEY     Whether to password-protect the private key (y/n)
+  REUSE_PFX_PASS  Reuse PFX password for private key (y/n)
+
+Options:
+  -h, --help      Show this help message and exit
+
+Environment:
+  TRACE=1         Enable shell tracing (set -x)
+
+Examples:
+  ./newUserCert.sh
+  ./newUserCert.sh "user1" "CaPass123!" "PfxPass456!" "user1@example.com"
+  ./newUserCert.sh "user1" "CaPass123!" "PfxPass456!" "user1@example.com" y y
+HELP
+    exit 0
+}
+
+if [[ "${1:-}" == "-h" ]] || [[ "${1:-}" == "--help" ]]; then
+    show_help
+fi
+
 . ./common.sh
 
 

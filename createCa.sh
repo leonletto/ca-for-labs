@@ -4,6 +4,39 @@ set -o nounset
 set -o pipefail
 if [[ "${TRACE-0}" == "1" ]]; then set -o xtrace; fi
 
+show_help() {
+    cat <<'HELP'
+Usage: ./createCa.sh [CA_NAME COUNTRY STATE LOCALITY ORG OU CN EMAIL]
+
+Create a new Certificate Authority (CA).
+
+Arguments (all optional — interactive prompts if omitted):
+  CA_NAME       Name for the CA (also used as filename)
+  COUNTRY       Country code (2 letters, e.g. US)
+  STATE         State or province name
+  LOCALITY      City name
+  ORG           Organization name
+  OU            Organizational unit name
+  CN            Common Name (fully qualified hostname)
+  EMAIL         Email address
+
+Options:
+  -h, --help    Show this help message and exit
+
+Environment:
+  TRACE=1       Enable shell tracing (set -x)
+
+Examples:
+  ./createCa.sh
+  ./createCa.sh myca US California "San Jose" "My Org" IT myca.example.com admin@example.com
+HELP
+    exit 0
+}
+
+if [[ "${1:-}" == "-h" ]] || [[ "${1:-}" == "--help" ]]; then
+    show_help
+fi
+
 . ./common.sh
 
 

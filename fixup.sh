@@ -4,6 +4,31 @@ set -o nounset
 set -o pipefail
 if [[ "${TRACE-0}" == "1" ]]; then set -o xtrace; fi
 
+show_help() {
+    cat <<'HELP'
+Usage: ./fixup.sh
+
+Remove all generated CA files, certificates, keys, and configuration.
+This resets the directory to a clean state so you can start fresh.
+
+WARNING: This permanently deletes all certificates, keys, and CA data.
+
+Options:
+  -h, --help    Show this help message and exit
+
+Environment:
+  TRACE=1       Enable shell tracing (set -x)
+
+Examples:
+  ./fixup.sh
+HELP
+    exit 0
+}
+
+if [[ "${1:-}" == "-h" ]] || [[ "${1:-}" == "--help" ]]; then
+    show_help
+fi
+
 . ./common.sh
 
 rm -rf cacerts
