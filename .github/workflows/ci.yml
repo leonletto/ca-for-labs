@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  shellcheck:
+    name: ShellCheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install ShellCheck
+        run: sudo apt-get update && sudo apt-get install -y shellcheck
+
+      - name: Run ShellCheck on shell scripts
+        run: shellcheck -x --severity=warning *.sh
+
+  test:
+    name: BATS Tests
+    runs-on: ubuntu-latest
+    needs: shellcheck
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y expect openssl
+
+      - name: Install BATS and helpers
+        run: |
+          git clone --depth 1 https://github.com/bats-core/bats-core.git test/bats
+          git clone --depth 1 https://github.com/bats-core/bats-support.git test/test_helper/bats-support
+          git clone --depth 1 https://github.com/bats-core/bats-assert.git test/test_helper/bats-assert
+          git clone --depth 1 https://github.com/bats-core/bats-file.git test/test_helper/bats-file
+
+      - name: Make scripts executable
+        run: chmod +x *.sh test/*.exp
+
+      - name: Run BATS tests
+        run: ./test/bats/bin/bats test/testLittleCa.bats

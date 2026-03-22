@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 
 # Some settings and functions common to all scripts
 caCertPath=cacerts
