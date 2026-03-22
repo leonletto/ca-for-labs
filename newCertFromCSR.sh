@@ -45,21 +45,8 @@ else
 fi
 
 validateFilename "$csrFileName" "CSR filename" || exit 1
-if ! [[ "${2:-}" ]]
-then
-    echo
-    read -r -s -p "Please enter the password for your CA to issue certificates: " caPassword
-    caPassword="$(echo "${caPassword}" | sed -e 's/[]\/$*.^|[]/\\&/g')"
-    echo
-else
-    caPassword="$(echo "${2}" | sed -e 's/[]\/$*.^|[]/\\&/g')"
-fi
 
-if checkCAPassword "$caPassword"; then
-    caPassword=$(echo "${caPassword}" | sed -e 's/\\//g')
-else
-    exit 1
-fi
+prompt_ca_password "${2:-}"
 
 myCACert=( cacerts/*.crt )
 

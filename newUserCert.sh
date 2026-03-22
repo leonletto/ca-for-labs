@@ -60,37 +60,9 @@ fi
 validateCertName "$certName" || exit 1
 
 
-if ! [[ "${2:-}" ]]
-then
-    echo
-    read -r -s -p "Please enter the password for your CA to issue certificates: " caPassword
-    caPassword="$(echo "${caPassword}" | sed -e 's/[]\/$*.^|[]/\\&/g')"
-    echo
-else
-    caPassword="$(echo "${2}" | sed -e 's/[]\/$*.^|[]/\\&/g')"
-fi
+prompt_ca_password "${2:-}"
 
-if checkCAPassword "$caPassword"; then
-    caPassword=$(echo "${caPassword}" | sed -e 's/\\//g')
-else
-    exit 1
-fi
-
-
-if ! [[ "${3:-}" ]]
-then
-    read -r -s -p "Please enter the password to use for your pfx file: " pfxPassword
-    pfxPassword="$(echo "${pfxPassword}" | sed -e 's/[]\/$*.^|[]/\\&/g')"
-    echo
-else
-    pfxPassword="$(echo "${3}" | sed -e 's/[]\/$*.^|[]/\\&/g')"
-fi
-
-if validPassword "$pfxPassword"; then
-    pfxPassword=$(echo "${pfxPassword}" | sed -e 's/\\//g')
-else
-    exit 1
-fi
+prompt_pfx_password "${3:-}"
 
 if ! [[ "${4:-}" ]]
 then
@@ -104,24 +76,8 @@ fi
 validateCertName "$emailAddress" "email address" || exit 1
 
 
-if ! [[ "${5:-}" ]]
-then
-    read -r -p "Do you want a password on your PEM private key? y/n: " passOnPrivateKey
-    echo
-    if [ "$passOnPrivateKey" = "y" ]; then
-        read -r -s -p "do you want to use the PFX file password for your private key? y/n: " answer
-        echo
-        if grep -q -e '[Yy]' <<< "$answer";then
-            echo "using same password for private key"
-            privateKeyPassword=$pfxPassword
-        else
-            read -r -s -p "Please enter the password to use for your private key: " privateKeyPassword
-            privateKeyPassword="$(echo "${privateKeyPassword}" | sed -e 's/[]\/$*.^|[]/\\&/g')"
-            echo
-        fi
-    else
-        privateKeyPassword=""
-    fi
+if ! [[ "${5:-}" ]]; then
+    prompt_private_key_password
 else
     if [ "$5" = "y" ] && [ "$6" = "y" ]; then
         echo "using same password for private key"
@@ -129,31 +85,32 @@ else
         passOnPrivateKey="y"
     elif [ "$5" = "y" ] && [ "$6" = "n" ]; then
         read -r -s -p "Please enter the password to use for your private key: " privateKeyPassword
-        privateKeyPassword="$(echo "${privateKeyPassword}" | sed -e 's/[]\/$*.^|[]/\\&/g')"
+        privateKeyPassword="$(escape_password "$privateKeyPassword")"
         passOnPrivateKey="y"
         echo
     elif [ "$5" = "y" ]; then
         read -r -s -p "do you want to use the PFX file password for your private key? y/n: " answer
         echo
-        if grep -q -e '[Yy]' <<< "$answer";then
+        if grep -q -e '[Yy]' <<< "$answer"; then
             echo "using same password for private key"
             privateKeyPassword=$pfxPassword
         else
             read -r -s -p "Please enter the password to use for your private key: " privateKeyPassword
-            privateKeyPassword="$(echo "${privateKeyPassword}" | sed -e 's/[]\/$*.^|[]/\\&/g')"
+            privateKeyPassword="$(escape_password "$privateKeyPassword")"
             echo
         fi
+        passOnPrivateKey="y"
     else
         passOnPrivateKey="n"
         privateKeyPassword=""
     fi
-fi
 
-if [ "$passOnPrivateKey" == "y" ]; then
-    if validPassword "$privateKeyPassword"; then
-        privateKeyPassword=$(echo "${privateKeyPassword}" | sed -e 's/\\//g')
-    else
-        exit 1
+    if [ "$passOnPrivateKey" == "y" ]; then
+        if validPassword "$privateKeyPassword"; then
+            privateKeyPassword=$(unescape_password "$privateKeyPassword")
+        else
+            exit 1
+        fi
     fi
 fi
 
@@ -165,13 +122,13 @@ opensslType=$(openssl version | cut -d' ' -f1)
 opensslVersion=$(openssl version | cut -d' ' -f2)
 opensslNewVersion=""
 if [ "$opensslType" == "LibreSSL" ]; then
-    if ge "$opensslVersion" "3.0.2"; then
+    if version_ge "$opensslVersion" "3.0.2"; then
         opensslNewVersion="true"
     else
         opensslNewVersion="false"
     fi
 else
-    if ge "$opensslVersion" "1.1.1"; then
+    if version_ge "$opensslVersion" "1.1.1"; then
         opensslNewVersion="true"
     else
         opensslNewVersion="false"
@@ -269,15 +226,7 @@ openssl verify -CAfile "${myCACert[0]}" usercerts/"$certName".crt
 #Create the PFX
 echo "Creating PFX for Windows"
 
-pfx_passfile=$(create_passfile "$pfxPassword")
-if [ "$passOnPrivateKey" == "y" ]; then
-    pk_passfile=${pk_passfile:-$(create_passfile "$privateKeyPassword")}
-    openssl pkcs12 -export -clcerts -in usercerts/"$certName".crt -inkey usercerts/"$certName".key -chain -CAfile "${myCACert[0]}" \
-    -passin file:"$pk_passfile" -passout file:"$pfx_passfile" -out pfxfiles/"$certName".pfx
-else
-    openssl pkcs12 -export -clcerts -in usercerts/"$certName".crt -inkey usercerts/"$certName".key -chain -CAfile "${myCACert[0]}" \
-    -passout file:"$pfx_passfile" -out pfxfiles/"$certName".pfx
-fi
+create_pfx_file "usercerts/$certName.crt" "usercerts/$certName.key" "pfxfiles/$certName.pfx" -clcerts
 
 
 

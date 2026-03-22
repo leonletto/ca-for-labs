@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+set -o errexit
+set -o nounset
+set -o pipefail
 
 # Some settings and functions common to all scripts
 caCertPath=cacerts
@@ -160,13 +163,23 @@ sedCmd() {
 validCharacters='[\~\!\@\#\$\%\^\*\_\+]'
 invalidCharacters='[\`\&\(\)\|\\\"\;\<\>\?]'
 
+# Escape special regex characters in a password for validation
+escape_password() {
+    echo "$1" | sed -e 's/[]\/$*.^|[]/\\&/g'
+}
+
+# Unescape a previously escaped password
+unescape_password() {
+    echo "$1" | sed -e 's/\\//g'
+}
+
 
 # Usage - this example uses pfxPassword as the one to check.
 # Password being checked for validity be escaped using this code:
-# pfxPassword="$(echo "${3}" | sed -e 's/[]\/$*.^|[]/\\&/g')"
+# pfxPassword="$(escape_password "${3}")"
 # Then pass it to this function using the following syntax
 # if validPassword "$pfxPassword"; then
-#    pfxPassword=$(echo "${pfxPassword}" | sed -e 's/\\//g')
+#    pfxPassword=$(unescape_password "$pfxPassword")
 #else
 #    exit 1
 #fi
@@ -193,7 +206,7 @@ validPassword() {
             echo "Your Password contains invalid special characters eg: ${invalidCharacters//\\/}."
             echo "Valid special characters are ${validCharacters//\\/}"
             read -r -s -p "Please re-enter the password: " checkPassword
-            checkPassword="$(echo "${checkPassword}" | sed -e 's/[]\/$*.^|[]/\\&/g')"
+            checkPassword="$(escape_password "$checkPassword")"
             secondTry=true
         fi
         echo
@@ -205,11 +218,11 @@ validPassword() {
 
 # Usage
 # Password being checked for validity be escaped using this code:
-# caPassword="$(echo "${2}" | sed -e 's/[]\/$*.^|[]/\\&/g')"
+# caPassword="$(escape_password "${2}")"
 # Then pass it to this function using the following syntax
 # if checkCAPassword "$caPassword"; then
      # this line reverts the password so you can use it in your code later
-#    caPassword=$(echo "${caPassword}" | sed -e 's/\\//g')
+#    caPassword=$(unescape_password "$caPassword")
 #else
 #    exit 1
 #fi
@@ -236,7 +249,7 @@ checkCAPassword() {
             echo "Please try again."
             echo
             read -r -s -p "Please enter the password for your CA to issue certificates: " caPassword
-            caPassword="$(echo "${caPassword}" | sed -e 's/[]\/$*.^|[]/\\&/g')"
+            caPassword="$(escape_password "$caPassword")"
             echo
             secondTry=true
         echo
@@ -244,6 +257,106 @@ checkCAPassword() {
         echo
     done
 
+}
+
+# Prompt for and validate CA password.
+# Usage: prompt_ca_password [raw_password_arg]
+# Sets global: caPassword
+prompt_ca_password() {
+    local raw_arg="${1:-}"
+    if ! [[ "$raw_arg" ]]; then
+        echo
+        read -r -s -p "Please enter the password for your CA to issue certificates: " caPassword
+        caPassword="$(escape_password "$caPassword")"
+        echo
+    else
+        caPassword="$(escape_password "$raw_arg")"
+    fi
+
+    if checkCAPassword "$caPassword"; then
+        caPassword=$(unescape_password "$caPassword")
+    else
+        exit 1
+    fi
+}
+
+# Prompt for and validate PFX password.
+# Usage: prompt_pfx_password [raw_password_arg]
+# Sets global: pfxPassword
+prompt_pfx_password() {
+    local raw_arg="${1:-}"
+    if ! [[ "$raw_arg" ]]; then
+        read -r -s -p "Please enter the password to use for your pfx file: " pfxPassword
+        pfxPassword="$(escape_password "$pfxPassword")"
+        echo
+    else
+        pfxPassword="$(escape_password "$raw_arg")"
+    fi
+
+    if validPassword "$pfxPassword"; then
+        pfxPassword=$(unescape_password "$pfxPassword")
+    else
+        exit 1
+    fi
+}
+
+# Prompt interactively for private key password.
+# Requires pfxPassword to be set (offers to reuse it).
+# Usage: prompt_private_key_password
+# Sets globals: passOnPrivateKey, privateKeyPassword
+prompt_private_key_password() {
+    read -r -p "Do you want a password on your PEM private key? y/n: " passOnPrivateKey
+    echo
+    if [ "$passOnPrivateKey" = "y" ]; then
+        read -r -s -p "do you want to use the PFX file password for your private key? y/n: " answer
+        echo
+        if grep -q -e '[Yy]' <<< "$answer"; then
+            echo "using same password for private key"
+            privateKeyPassword=$pfxPassword
+        else
+            read -r -s -p "Please enter the password to use for your private key: " privateKeyPassword
+            privateKeyPassword="$(escape_password "$privateKeyPassword")"
+            echo
+        fi
+        if validPassword "$privateKeyPassword"; then
+            privateKeyPassword=$(unescape_password "$privateKeyPassword")
+        else
+            exit 1
+        fi
+    else
+        passOnPrivateKey="n"
+        privateKeyPassword=""
+    fi
+}
+
+# Create a PFX file from a certificate and key.
+# Requires pfxPassword, passOnPrivateKey, and (if applicable) privateKeyPassword to be set.
+# Usage: create_pfx_file <cert_file> <key_file> <output_file> [extra_openssl_args...]
+create_pfx_file() {
+    local cert_file="$1"
+    local key_file="$2"
+    local output_file="$3"
+    shift 3
+
+    local _ca_cert
+    _ca_cert=( cacerts/*.crt )
+    local _pfx_passfile
+    _pfx_passfile=$(create_passfile "$pfxPassword")
+
+    if [ "$passOnPrivateKey" == "y" ]; then
+        pk_passfile=${pk_passfile:-$(create_passfile "$privateKeyPassword")}
+        openssl pkcs12 -export "$@" \
+            -in "$cert_file" -inkey "$key_file" \
+            -chain -CAfile "${_ca_cert[0]}" \
+            -passin file:"$pk_passfile" -passout file:"$_pfx_passfile" \
+            -out "$output_file"
+    else
+        openssl pkcs12 -export "$@" \
+            -in "$cert_file" -inkey "$key_file" \
+            -chain -CAfile "${_ca_cert[0]}" \
+            -passout file:"$_pfx_passfile" \
+            -out "$output_file"
+    fi
 }
 
 #compare version numbers of two OS versions or floating point numbers including ascii characters
@@ -325,7 +438,7 @@ compare_numbers() {
 }
 
 # compares two numbers n1 > n2 including floating point numbers
-gt() {
+version_gt() {
     result=$(compare_numbers "$1" "$2")
     if [[ "$result" == "gt" ]]; then
         return 0
@@ -334,8 +447,8 @@ gt() {
     fi
 }
 
-# compares two numbers n1 > n2 including floating point numbers
-lt() {
+# compares two numbers n1 < n2 including floating point numbers
+version_lt() {
     result=$(compare_numbers "$1" "$2")
     if [[ "$result" == "lt" ]]; then
         return 0
@@ -345,7 +458,7 @@ lt() {
 }
 
 # compares two numbers n1 >= n2 including floating point numbers
-ge() {
+version_ge() {
     result=$(compare_numbers "$1" "$2")
     if [[ "$result" == "gt" ]]; then
         return 0
@@ -356,8 +469,8 @@ ge() {
     fi
 }
 
-# compares two numbers n1 >= n2 including floating point numbers
-le() {
+# compares two numbers n1 <= n2 including floating point numbers
+version_le() {
     result=$(compare_numbers "$1" "$2")
     if [[ "$result" == "lt" ]]; then
         return 0
@@ -369,7 +482,7 @@ le() {
 }
 
 # compares two numbers n1 == n2 including floating point numbers
-eq() {
+version_eq() {
     result=$(compare_numbers "$1" "$2")
     if [[ "$result" == "eq" ]]; then
         return 0
@@ -377,4 +490,3 @@ eq() {
         return 1
     fi
 }
-
