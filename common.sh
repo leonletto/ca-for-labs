@@ -80,10 +80,9 @@ checkCAPassword() {
     local caPassword="$1"
     VALID=true
     myCAPrivateKey=( "$caCertPath"/*.key )
-    command="openssl rsa -check -in ${myCAPrivateKey[0]} -passin pass:${caPassword} &> /dev/null"
     secondTry=false
     for (( ;; )); do
-        if ! eval "$command" || false
+        if ! openssl rsa -check -in "${myCAPrivateKey[0]}" -passin "pass:${caPassword}" &> /dev/null
         then
             VALID=false
         else
@@ -97,9 +96,8 @@ checkCAPassword() {
             echo "Invalid password for CA private key."
             echo "Please try again."
             echo
-            read -r -s -p "Please enter the password for your CA to issue certificates: " checkCAPassword
-            checkCAPassword="$(echo "${checkCAPassword}" | sed -e 's/[]\/$*.^|[]/\\&/g')"
-            command="openssl rsa -check -in ${myCAPrivateKey[0]} -passin pass:${checkCAPassword} &> /dev/null"
+            read -r -s -p "Please enter the password for your CA to issue certificates: " caPassword
+            caPassword="$(echo "${caPassword}" | sed -e 's/[]\/$*.^|[]/\\&/g')"
             echo
             secondTry=true
         echo
