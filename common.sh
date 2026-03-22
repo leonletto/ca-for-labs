@@ -90,6 +90,28 @@ validateFilename() {
     return 0
 }
 
+# Temporary password file management
+# Passwords written to temp files instead of passed on command line (visible in ps)
+_passfiles=()
+
+create_passfile() {
+    local tmpfile
+    tmpfile=$(mktemp)
+    chmod 600 "$tmpfile"
+    printf '%s' "$1" > "$tmpfile"
+    _passfiles+=("$tmpfile")
+    echo "$tmpfile"
+}
+
+cleanup_passfiles() {
+    for f in "${_passfiles[@]:-}"; do
+        rm -f "$f"
+    done
+    _passfiles=()
+}
+
+trap cleanup_passfiles EXIT
+
 sedCmd() {
     local script="$1"
     local file="$2"
@@ -170,7 +192,9 @@ checkCAPassword() {
     myCAPrivateKey=( "$caCertPath"/*.key )
     secondTry=false
     for (( ;; )); do
-        if ! openssl rsa -check -in "${myCAPrivateKey[0]}" -passin "pass:${caPassword}" &> /dev/null
+        local _ca_passfile
+        _ca_passfile=$(create_passfile "$caPassword")
+        if ! openssl rsa -check -in "${myCAPrivateKey[0]}" -passin "file:${_ca_passfile}" &> /dev/null
         then
             VALID=false
         else

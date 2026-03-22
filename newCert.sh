@@ -81,15 +81,19 @@ fi
 
 echo "Generating key request for $domain"
 
+ca_passfile=$(create_passfile "$caPassword")
+
 #Remove passphrase from the key. Comment the line out to keep the passphrase
 if [ "$passOnPrivateKey" == "n" ]; then
     #Generate a key
-    openssl genrsa -aes256 -passout pass:tempPassword -out privatekeys/"$domain".key 4096
+    temp_passfile=$(create_passfile "tempPassword")
+    openssl genrsa -aes256 -passout file:"$temp_passfile" -out privatekeys/"$domain".key 4096
     #"Removing passphrase from key"
-    openssl rsa -in privatekeys/"$domain".key -out privatekeys/"$domain".key -passin pass:tempPassword
+    openssl rsa -in privatekeys/"$domain".key -out privatekeys/"$domain".key -passin file:"$temp_passfile"
 else
     #Generate a key
-    openssl genrsa -aes256 -passout pass:"$privateKeyPassword" -out privatekeys/"$domain".key 4096
+    pk_passfile=$(create_passfile "$privateKeyPassword")
+    openssl genrsa -aes256 -passout file:"$pk_passfile" -out privatekeys/"$domain".key 4096
 fi
 
 # Configure the SANs and extensions for the certificate
@@ -110,7 +114,8 @@ echo "subj: $subj"
 echo "Creating CSR"
 
 if [ "$passOnPrivateKey" == "y" ]; then
-    openssl req -new -sha256 -key privatekeys/"$domain".key -out requests/"$domain".csr -passin pass:"$privateKeyPassword" -subj "$subj" \
+    pk_passfile=${pk_passfile:-$(create_passfile "$privateKeyPassword")}
+    openssl req -new -sha256 -key privatekeys/"$domain".key -out requests/"$domain".csr -passin file:"$pk_passfile" -subj "$subj" \
     -config <(cat ./openssl.cnf ./options.cnf) -extensions SAN
 else
     openssl req -new -sha256 -key privatekeys/"$domain".key -out requests/"$domain".csr -subj "$subj" \
@@ -122,7 +127,7 @@ myCACert=( cacerts/*.crt )
 
 #Sign the Cert
 echo "Signing the certificate with the CA"
-openssl ca -batch -passin pass:"${caPassword}" -extfile ./options.cnf -config openssl.cnf -extensions SAN -in requests/"$domain".csr \
+openssl ca -batch -passin file:"$ca_passfile" -extfile ./options.cnf -config openssl.cnf -extensions SAN -in requests/"$domain".csr \
  -out certs/"$domain".crt
 
 rm options.cnf
@@ -134,12 +139,14 @@ openssl verify -CAfile "${myCACert[0]}" certs/"$domain".crt
 #Create the PFX
 echo "Creating PFX for Windows servers"
 
+pfx_passfile=$(create_passfile "$pfxPassword")
 if [ "$passOnPrivateKey" == "y" ]; then
+    pk_passfile=${pk_passfile:-$(create_passfile "$privateKeyPassword")}
     openssl pkcs12 -export -in certs/"$domain".crt -inkey privatekeys/"$domain".key -name "$domain-(expiration date)" -chain -CAfile "${myCACert[0]}" \
-    -passin pass:"$privateKeyPassword" -passout pass:"$pfxPassword" -out pfxfiles/"$domain".pfx
+    -passin file:"$pk_passfile" -passout file:"$pfx_passfile" -out pfxfiles/"$domain".pfx
 else
     openssl pkcs12 -export -in certs/"$domain".crt -inkey privatekeys/"$domain".key -name "$domain-(expiration date)" -chain -CAfile "${myCACert[0]}" \
-    -passout pass:"$pfxPassword" -out pfxfiles/"$domain".pfx
+    -passout file:"$pfx_passfile" -out pfxfiles/"$domain".pfx
 fi
 
 #

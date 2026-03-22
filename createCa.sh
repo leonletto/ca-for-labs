@@ -211,18 +211,20 @@ sedCmd "s|http://crl\.yourorgname/yourcaname\.crl\.pem|http://crl\.$CN/$caname.c
 cp -f ./optionsSample.cnf ./options.cnf
 echo "crlDistributionPoints = URI:http://crl.$CN/$caname.crl.pem" >> options.cnf
 
-openssl genrsa -aes256 -passout pass:"$password" -out  cacerts/"$caname".key 4096
+pw_passfile=$(create_passfile "$password")
+
+openssl genrsa -aes256 -passout file:"$pw_passfile" -out  cacerts/"$caname".key 4096
 case "$(uname -sr)" in
     MINGW64*)      subj="//C=$C/ST=$ST/L=$L/O=$O/OU=$OU/CN=$CN/emailAddress=$emailAddress";;
     *)             subj="/C=$C/ST=$ST/L=$L/O=$O/OU=$OU/CN=$CN/emailAddress=$emailAddress";;
 esac
 
-openssl req -newkey rsa:2048 -sha256 -x509 -days 1826 -key cacerts/"$caname."key -out cacerts/"$caname".crt -passin pass:"$password"  -subj "$subj" -config openssl.cnf -extensions v3_ca
+openssl req -newkey rsa:2048 -sha256 -x509 -days 1826 -key cacerts/"$caname."key -out cacerts/"$caname".crt -passin file:"$pw_passfile"  -subj "$subj" -config openssl.cnf -extensions v3_ca
 echo "1000" > serial
 echo "1000" > crl/crlnumber
 touch index.txt
 echo "unique_subject = yes" > index.txt.attr
-openssl ca -config openssl.cnf -passin pass:"$password" -gencrl -out crl/"$caname".crl.pem
+openssl ca -config openssl.cnf -passin file:"$pw_passfile" -gencrl -out crl/"$caname".crl.pem
 
 echo "CA Certificate Created and you are ready to issue Certificates"
 echo "Please copy the following files to Anywhere that needs to trust certificates from this CA"
