@@ -148,6 +148,9 @@ case "$(uname -sr)" in
     *)             subj="/CN=$certName/emailAddress=$emailAddress";;
 esac
 
+ca_passfile=$(create_passfile "$caPassword")
+temp_passfile=$(create_passfile "tempPassword")
+
 if [ "$opensslNewVersion" == "true" ]; then
     echo "passOnPrivateKey: $passOnPrivateKey"
     #Remove passphrase from the key. Comment the line out to keep the passphrase
@@ -160,25 +163,26 @@ if [ "$opensslNewVersion" == "true" ]; then
                 -extensions user_cert \
                 -keyform PEM \
                 -keyout usercerts/"$certName".key \
-                -passin pass:"${caPassword}" \
+                -passin file:"$ca_passfile" \
                 -out requests/"$certName".csr \
-                -passout pass:tempPassword \
+                -passout file:"$temp_passfile" \
                 -outform PEM
         #"Removing passphrase from key"
         echo "Removing passphrase from key"
-        openssl rsa -in usercerts/"$certName".key -out usercerts/"$certName".key -passin pass:tempPassword
+        openssl rsa -in usercerts/"$certName".key -out usercerts/"$certName".key -passin file:"$temp_passfile"
     else
         #Generate a key
         echo "Generating key with password"
+        pk_passfile=$(create_passfile "$privateKeyPassword")
         openssl req -newkey  rsa:2048 \
                 -subj "$subj" \
                 -config openssl.cnf \
                 -extensions user_cert \
                 -keyform PEM \
-                -passin pass:"${caPassword}" \
+                -passin file:"$ca_passfile" \
                 -keyout usercerts/"$certName".key \
                 -out requests/"$certName".csr \
-                -passout pass:"$privateKeyPassword" \
+                -passout file:"$pk_passfile" \
                 -outform PEM
     fi
 else
@@ -193,24 +197,25 @@ else
                 -config openssl.cnf -extensions user_cert \
                 -keyform PEM \
                 -keyout usercerts/"$certName".key \
-                -passin pass:"${caPassword}" \
+                -passin file:"$ca_passfile" \
                 -out requests/"$certName".csr \
-                -passout pass:tempPassword \
+                -passout file:"$temp_passfile" \
                 -outform PEM
         #"Removing passphrase from key"
         echo "Removing passphrase from key"
-        openssl rsa -in usercerts/"$certName".key -out usercerts/"$certName".key -passin pass:tempPassword
+        openssl rsa -in usercerts/"$certName".key -out usercerts/"$certName".key -passin file:"$temp_passfile"
     else
         #Generate a key
         echo "Generating key with password"
+        pk_passfile=${pk_passfile:-$(create_passfile "$privateKeyPassword")}
         openssl req -newkey  rsa:2048 \
                 -subj "$subj" \
                 -config openssl.cnf -extensions user_cert \
                 -keyform PEM \
-                -passin pass:"${caPassword}" \
+                -passin file:"$ca_passfile" \
                 -keyout usercerts/"$certName".key \
                 -out requests/"$certName".csr \
-                -passout pass:"$privateKeyPassword" \
+                -passout file:"$pk_passfile" \
                 -outform PEM
     fi
 fi
@@ -219,7 +224,7 @@ fi
 myCACert=( cacerts/*.crt )
 #Generate the cert (good for 10 years)
 echo "Signing the certificate with the CA"
-openssl ca -batch -passin pass:"${caPassword}" -config openssl.cnf -extensions user_cert -in requests/"$certName".csr -out usercerts/"$certName".crt
+openssl ca -batch -passin file:"$ca_passfile" -config openssl.cnf -extensions user_cert -in requests/"$certName".csr -out usercerts/"$certName".crt
 
 # Verify the cert
 echo "Verifying the cert and adding it to the serial number file"
@@ -228,12 +233,14 @@ openssl verify -CAfile "${myCACert[0]}" usercerts/"$certName".crt
 #Create the PFX
 echo "Creating PFX for Windows"
 
+pfx_passfile=$(create_passfile "$pfxPassword")
 if [ "$passOnPrivateKey" == "y" ]; then
+    pk_passfile=${pk_passfile:-$(create_passfile "$privateKeyPassword")}
     openssl pkcs12 -export -clcerts -in usercerts/"$certName".crt -inkey usercerts/"$certName".key -chain -CAfile "${myCACert[0]}" \
-    -passin pass:"$privateKeyPassword" -passout pass:"$pfxPassword" -out pfxfiles/"$certName".pfx
+    -passin file:"$pk_passfile" -passout file:"$pfx_passfile" -out pfxfiles/"$certName".pfx
 else
     openssl pkcs12 -export -clcerts -in usercerts/"$certName".crt -inkey usercerts/"$certName".key -chain -CAfile "${myCACert[0]}" \
-    -passout pass:"$pfxPassword" -out pfxfiles/"$certName".pfx
+    -passout file:"$pfx_passfile" -out pfxfiles/"$certName".pfx
 fi
 
 

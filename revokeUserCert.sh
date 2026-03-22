@@ -30,7 +30,9 @@ else
     exit 1
 fi
 
-openssl ca -batch -config openssl.cnf -passin pass:"${caPassword}" -revoke usercerts/"$hostname".crt
+ca_passfile=$(create_passfile "$caPassword")
+
+openssl ca -batch -config openssl.cnf -passin file:"$ca_passfile" -revoke usercerts/"$hostname".crt
 if [ -f usercerts/"$hostname".crt ]; then
     mv usercerts/"$hostname".crt revoked/
 fi
@@ -41,7 +43,7 @@ if [ -f pfxfiles/"$hostname".pfx ]; then
     mv pfxfiles/"$hostname".pfx revoked/
 fi
 caname=$(basename "$caCertPath"/*.key .key)
-openssl ca -batch -config openssl.cnf -passin pass:"${caPassword}" -gencrl -out crl/"$caname".crl.pem
+openssl ca -batch -config openssl.cnf -passin file:"$ca_passfile" -gencrl -out crl/"$caname".crl.pem
 
 
 
