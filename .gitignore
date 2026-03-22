@@ -38,6 +38,8 @@ littleCAnginx.conf
 
 submodules
 
+# Gas Town runtime
 .beads/
 .claude/
 .runtime/
+CLAUDE.md
