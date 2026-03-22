@@ -24,8 +24,6 @@ chmod +x createCa.sh
 
 ### Issue server certificates for your environment manually
 
-###           
-
 ```shell
 chmod +x newCert.sh
 ./newCert.sh myhost.mydomain.com
@@ -46,11 +44,9 @@ chmod +x newCert.sh
 Save your CSR file in the same directory as the scripts. The CSR file can have any name you want. The script will
 prompt you for the name of the CSR file if you do not supply it as an argument.
 
-###           
-
 ```shell
 chmod +x newCertFromCSR.sh
-./newCert.sh test.com.csr
+./newCertFromCSR.sh test.com.csr
 ```
 
 ### Issue server certificates for your environment with your CSR file and automatically
@@ -58,11 +54,9 @@ chmod +x newCertFromCSR.sh
 Save your CSR file in the same directory as the scripts. The CSR file can have any name you want. The script will
 prompt you for the name of the CSR file if you do not supply it as an argument.
 
-###           
-
 ```shell
 chmod +x newCertFromCSR.sh
-./newCert.sh test.com.csr 'myCAPassword'
+./newCertFromCSR.sh test.com.csr 'myCAPassword'
 ```
 
 ### Issue user certificates for your environment (working on it...)
@@ -92,16 +86,6 @@ chmod +x revokeCert.sh
 ./revokeCert.sh joe 'myCAPassword'
 ```
 
-### configure nginx server to use your own CA
-
-```shell
-#Install nginx on your server
-# Create a certificate for your nginx server hostname
-./newCert.sh mylittleca.mydomain.com
-# run the following command to configure and launch nginx to use your CA and the cert you just created
-./startNginx.sh mylittleca.mydomain.com
-```
-
 # Testing
 
 ### I am using the BATS framework to test the scripts. You can find more information about BATS here:
@@ -115,7 +99,7 @@ git submodule add https://github.com/bats-core/bats-core.git test/bats
 git submodule add https://github.com/bats-core/bats-support.git test/test_helper/bats-support
 git submodule add https://github.com/bats-core/bats-assert.git test/test_helper/bats-assert
 git submodule add https://github.com/bats-core/bats-file.git test/test_helper/bats-file
-chmod +x ./createCa.sh ./fixup.sh ./newCert.sh ./newUserCert.sh ./revokeCert.sh ./revokeUserCert.sh
+chmod +x ./createCa.sh ./fixup.sh ./newCert.sh ./newCertFromCSR.sh ./newUserCert.sh ./revokeCert.sh ./revokeUserCert.sh
 ./test/bats/bin/bats test/testLittleCa.bats
 ```
 
