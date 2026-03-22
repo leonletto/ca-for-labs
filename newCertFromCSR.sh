@@ -15,6 +15,8 @@ then
 else
     csrFileName=$1
 fi
+
+validateFilename "$csrFileName" "CSR filename" || exit 1
 if ! [[ "${2:-}" ]]
 then
     echo

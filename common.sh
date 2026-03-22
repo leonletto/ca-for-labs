@@ -2,6 +2,94 @@
 # Some settings and functions common to all scripts
 caCertPath=cacerts
 
+# Validate a domain/hostname argument (FQDN).
+# Rejects empty values, path traversal, and invalid characters.
+# Valid: alphanumeric, hyphens, dots, underscores (for hostnames).
+# Usage: validateDomain "$domain" || exit 1
+validateDomain() {
+    local value="$1"
+    local label="${2:-domain}"
+
+    if [[ -z "$value" ]]; then
+        echo "Error: ${label} cannot be empty." >&2
+        return 1
+    fi
+
+    # Reject path traversal
+    if [[ "$value" == *".."* ]] || [[ "$value" == *"/"* ]] || [[ "$value" == *"\\"* ]]; then
+        echo "Error: ${label} contains invalid path characters." >&2
+        return 1
+    fi
+
+    # Only allow valid hostname characters: alphanumeric, hyphens, dots, underscores, wildcards
+    if ! [[ "$value" =~ ^[a-zA-Z0-9._*-]+$ ]]; then
+        echo "Error: ${label} contains invalid characters. Only alphanumeric, hyphens, dots, underscores, and wildcards are allowed." >&2
+        return 1
+    fi
+
+    # Must not start or end with a hyphen or dot
+    if [[ "$value" =~ ^[.-] ]] || [[ "$value" =~ [.-]$ ]]; then
+        echo "Error: ${label} must not start or end with a hyphen or dot." >&2
+        return 1
+    fi
+
+    return 0
+}
+
+# Validate a certificate name (username, email, SID).
+# More permissive than domain: allows @ for email addresses.
+# Usage: validateCertName "$certName" || exit 1
+validateCertName() {
+    local value="$1"
+    local label="${2:-certificate name}"
+
+    if [[ -z "$value" ]]; then
+        echo "Error: ${label} cannot be empty." >&2
+        return 1
+    fi
+
+    # Reject path traversal
+    if [[ "$value" == *".."* ]] || [[ "$value" == *"/"* ]] || [[ "$value" == *"\\"* ]]; then
+        echo "Error: ${label} contains invalid path characters." >&2
+        return 1
+    fi
+
+    # Allow alphanumeric, hyphens, dots, underscores, @ (for email)
+    if ! [[ "$value" =~ ^[a-zA-Z0-9._@-]+$ ]]; then
+        echo "Error: ${label} contains invalid characters. Only alphanumeric, hyphens, dots, underscores, and @ are allowed." >&2
+        return 1
+    fi
+
+    return 0
+}
+
+# Validate a filename (e.g., CSR file).
+# Must be a simple filename or relative path without traversal.
+# Usage: validateFilename "$filename" || exit 1
+validateFilename() {
+    local value="$1"
+    local label="${2:-filename}"
+
+    if [[ -z "$value" ]]; then
+        echo "Error: ${label} cannot be empty." >&2
+        return 1
+    fi
+
+    # Reject path traversal
+    if [[ "$value" == *".."* ]]; then
+        echo "Error: ${label} contains path traversal characters." >&2
+        return 1
+    fi
+
+    # Reject null bytes and shell metacharacters
+    if [[ "$value" =~ [[:cntrl:]] ]] || [[ "$value" == *'$('* ]] || [[ "$value" == *'`'* ]] || [[ "$value" == *";"* ]] || [[ "$value" == *"|"* ]] || [[ "$value" == *"&"* ]]; then
+        echo "Error: ${label} contains invalid characters." >&2
+        return 1
+    fi
+
+    return 0
+}
+
 sedCmd() {
     local script="$1"
     local file="$2"

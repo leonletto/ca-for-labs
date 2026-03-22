@@ -25,6 +25,8 @@ else
     certName=$1
 fi
 
+validateCertName "$certName" || exit 1
+
 
 if ! [[ "${2:-}" ]]
 then
@@ -66,6 +68,8 @@ then
 else
     emailAddress=$4
 fi
+
+validateCertName "$emailAddress" "email address" || exit 1
 
 
 if ! [[ "${5:-}" ]]

@@ -14,6 +14,8 @@ then
 else
     hostname=$1
 fi
+
+validateDomain "$hostname" "hostname" || exit 1
 if ! [[ "${2:-}" ]]
 then
     echo

@@ -29,6 +29,8 @@ then
 else
     caname=$1
 fi
+
+validateCertName "$caname" "CA name" || exit 1
 if ! [[ "${2:-}" ]]
 then
     echo
@@ -77,6 +79,9 @@ then
 else
     CN=$7
 fi
+
+validateDomain "$CN" "Common Name" || exit 1
+
 if ! [[ "${8:-}" ]]
 then
     echo
@@ -85,6 +90,8 @@ then
 else
     emailAddress=$8
 fi
+
+validateCertName "$emailAddress" "email address" || exit 1
 
 # eg ./createCA.sh ubuntutest US CA Concord Me IT ubuntutest leon@ubuntutest.com
 #C=US

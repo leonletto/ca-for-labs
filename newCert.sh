@@ -15,6 +15,8 @@ then
 else
     domain=$1
 fi
+
+validateDomain "$domain" || exit 1
 if ! [[ "${2:-}" ]]
 then
     echo
