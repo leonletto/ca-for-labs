@@ -38,3 +38,6 @@ littleCAnginx.conf
 
 submodules
 
+.beads/
+.claude/
+.runtime/
