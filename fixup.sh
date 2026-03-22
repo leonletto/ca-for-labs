@@ -5,7 +5,6 @@ set -o pipefail
 if [[ "${TRACE-0}" == "1" ]]; then set -o xtrace; fi
 
 . ./common.sh
-sedCmd '/^crlDistributionPoints/d' optionsSample.cnf
 
 rm -rf cacerts
 rm -rf certs
@@ -22,7 +21,6 @@ rm -f openssl.cnf
 rm -f openssl.cnf.*
 rm -f options.cnf
 rm -f options.cnf.*
-rm -f optionsSample.cnf.bak
 rm -f userCertoptions.cnf
 rm -f userCertoptions.cnf.*
 rm -f serial
